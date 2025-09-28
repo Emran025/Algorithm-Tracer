@@ -68,72 +68,89 @@ def render_array_bars(snapshot: Dict[str, Any], title: str = "Array Visualizatio
     return fig
 
 def render_graph(snapshot: Dict[str, Any], title: str = "Graph Visualization") -> plt.Figure:
-    """Renders a graph, highlighting nodes and edges based on the current event.
+    """Renders a graph using rich visual metadata from a snapshot.
+
+    This function is declarative: it draws the graph based on the colors, widths,
+    and labels provided in the snapshot, without needing to know the underlying
+    algorithm logic.
 
     Args:
-        snapshot (Dict[str, Any]): The snapshot dictionary from the VisualizationEngine,
-                                   expected to contain a 'graph' key and 'current_event_data'.
+        snapshot (Dict[str, Any]): The snapshot dictionary from the VisualizationEngine.
+                                   It is expected to contain keys like 'graph_snapshot',
+                                   'node_colors', 'edge_colors', 'edge_widths', and 'node_labels'.
         title (str): Title for the plot.
 
     Returns:
         plt.Figure: A Matplotlib Figure object.
     """
-    graph_data = snapshot.get("graph", {})
-    event_data = snapshot.get("current_event_data", {})
-    distances = snapshot.get("distances", {})
-    mst_edges = snapshot.get("mst_edges", [])
+    graph_data = snapshot.get("graph_snapshot", {})
+    if not graph_data:
+        fig, ax = plt.subplots(figsize=(12, 10))
+        ax.text(0.5, 0.5, "Graph is empty or not provided in this step.",
+                horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
+        ax.set_title(title)
+        return fig
 
-    G = nx.DiGraph() if snapshot.get("current_event_type") in ["relax", "set_distance"] else nx.Graph()
+    # Determine if the graph is directed (for Dijkstra) or not (for Kruskal)
+    # A simple heuristic: if any edge u->v doesn't have a v->u counterpart.
+    is_directed = False
+    if snapshot.get("current_event_type") in ["visit", "relax"]: # Event types specific to Dijkstra
+        is_directed = True
 
-    # Add nodes and edges
+    G = nx.DiGraph() if is_directed else nx.Graph()
+
+    # Add nodes and edges from the raw graph data
     for u, neighbors in graph_data.items():
         G.add_node(u)
         for v, weight in neighbors:
             G.add_edge(u, v, weight=weight)
 
-    pos = nx.spring_layout(G, seed=42) # For consistent layout
+    pos = nx.spring_layout(G, seed=42, k=0.9)  # For consistent and spaced-out layout
 
-    fig, ax = plt.subplots(figsize=(10, 8))
-
-    if not G.nodes:
-        ax.text(0.5, 0.5, "Graph is empty", horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
-        ax.set_title(title)
-        return fig
-
-    # Default drawing
-    nx.draw_networkx_nodes(G, pos, node_color='lightblue', node_size=700, ax=ax)
-    nx.draw_networkx_edges(G, pos, edge_color='gray', width=1, ax=ax)
-    nx.draw_networkx_labels(G, pos, font_size=10, font_weight='bold', ax=ax)
-
-    edge_labels = nx.get_edge_attributes(G, 'weight')
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='green', ax=ax)
-
-    # Highlight based on event type
-    if snapshot.get("current_event_type") == "visit":
-        node = event_data.get("u")
-        if node in G.nodes: nx.draw_networkx_nodes(G, pos, nodelist=[node], node_color='red', node_size=700, ax=ax)
-    elif snapshot.get("current_event_type") == "consider_edge":
-        u, v = event_data.get("u"), event_data.get("v")
-        if G.has_edge(u, v): nx.draw_networkx_edges(G, pos, edgelist=[(u, v)], edge_color='red', width=2, ax=ax)
-        if G.has_edge(v, u) and not G.is_directed(): nx.draw_networkx_edges(G, pos, edgelist=[(v, u)], edge_color='red', width=2, ax=ax)
-    elif snapshot.get("current_event_type") == "add_mst_edge":
-        u, v = event_data.get("u"), event_data.get("v")
-        if G.has_edge(u, v): nx.draw_networkx_edges(G, pos, edgelist=[(u, v)], edge_color='blue', width=3, ax=ax)
-        if G.has_edge(v, u) and not G.is_directed(): nx.draw_networkx_edges(G, pos, edgelist=[(v, u)], edge_color='blue', width=3, ax=ax)
-
-    # Draw MST edges if available
-    if mst_edges:
-        nx.draw_networkx_edges(G, pos, edgelist=mst_edges, edge_color='blue', width=3, ax=ax)
-
-    # Display distances if available (e.g., Dijkstra)
-    if distances:
-        for node, dist in distances.items():
-            if node in pos:
-                x, y = pos[node]
-                ax.text(x, y + 0.1, f"D:{dist}", bbox=dict(facecolor='yellow', alpha=0.5), horizontalalignment='center')
-
-    ax.set_title(f"{title} - Step: {snapshot.get('current_event_details', '')}")
+    fig, ax = plt.subplots(figsize=(12, 10))
+    ax.set_title(f"{title}: {snapshot.get('current_event_details', '')}", fontsize=16, weight='bold')
     ax.axis('off')
+
+    # Get visual properties from the snapshot
+    node_colors = snapshot.get("node_colors", {})
+    edge_colors_map = snapshot.get("edge_colors", {})
+    edge_widths_map = snapshot.get("edge_widths", {})
+    node_labels = snapshot.get("node_labels", {n: str(n) for n in G.nodes()})
+
+    # Prepare lists for drawing, ensuring order matches G.nodes() and G.edges()
+    final_node_colors = [node_colors.get(n, 'gray') for n in G.nodes()]
+
+    final_edge_colors = []
+    final_edge_widths = []
+    for u, v in G.edges():
+        edge_tuple = tuple(sorted((u, v)))
+        final_edge_colors.append(edge_colors_map.get(edge_tuple, 'gray'))
+        final_edge_widths.append(edge_widths_map.get(edge_tuple, 1.0))
+
+    # Draw the graph with specified styles
+    nx.draw_networkx_nodes(
+        G, pos, node_color=final_node_colors, node_size=800,
+        edgecolors="black", linewidths=1.0, ax=ax
+    )
+    nx.draw_networkx_edges(
+        G, pos, edge_color=final_edge_colors, width=final_edge_widths,
+        arrows=is_directed, arrowstyle='-|>', arrowsize=20, ax=ax
+    )
+
+    # Draw node labels (potentially multi-line)
+    nx.draw_networkx_labels(
+        G, pos, labels=node_labels, font_size=10, font_weight='bold',
+        font_color='black', ax=ax
+    )
+
+    # Draw edge weight labels
+    edge_weight_labels = nx.get_edge_attributes(G, 'weight')
+    nx.draw_networkx_edge_labels(
+        G, pos, edge_labels=edge_weight_labels, font_color='#333333',
+        font_size=9, bbox=dict(facecolor='white', alpha=0.5, edgecolor='none', boxstyle='round,pad=0.2'),
+        ax=ax
+    )
+
     plt.tight_layout()
     return fig
 
@@ -147,60 +164,59 @@ if __name__ == '__main__':
         "current_event_data": {"i": 1, "j": 2}
     }
     fig_array = render_array_bars(array_snapshot_example, "Merge Sort Step")
-    plt.show()
+    # plt.show() # Uncomment to display during local testing
 
-    array_snapshot_swap_example = {
-        "array": [10, 5, 20, 30, 15],
-        "current_event_type": "swap",
-        "current_event_details": "Swapping elements at index 1 and 2",
-        "current_event_data": {"i": 1, "j": 2}
-    }
-    fig_array_swap = render_array_bars(array_snapshot_swap_example, "Merge Sort Step (Swap)")
-    plt.show()
-
-    # Example usage for graph rendering
-    graph_snapshot_example = {
-        "graph": {
-            "A": [("B", 1), ("C", 4)],
-            "B": [("A", 1), ("C", 2), ("D", 5)],
-            "C": [("A", 4), ("B", 2), ("D", 1)],
-            "D": [("B", 5), ("C", 1)]
+    # Example usage for the new, rich graph rendering
+    rich_graph_snapshot = {
+        "graph_snapshot": {
+            'A': [('B', 4), ('C', 2)], 'B': [('A', 4), ('E', 3)],
+            'C': [('A', 2), ('D', 2), ('F', 4)], 'D': [('C', 2), ('E', 3)],
+            'E': [('B', 3), ('D', 3), ('F', 1)], 'F': [('C', 4), ('E', 1)]
+        },
+        "node_colors": {
+            'A': '#cccccc', 'B': '#cccccc', 'C': '#ff9933', 'D': '#66b3ff',
+            'E': '#66b3ff', 'F': '#66b3ff'
+        },
+        "edge_colors": {
+            ('A', 'B'): '#333333', ('A', 'C'): '#333333', ('C', 'D'): '#3399ff',
+            ('C', 'F'): '#b3b3b3', ('B', 'E'): '#b3b3b3', ('D', 'E'): '#b3b3b3',
+            ('E', 'F'): '#b3b3b3'
+        },
+        "edge_widths": {
+            ('A', 'B'): 3.0, ('A', 'C'): 3.0, ('C', 'D'): 2.5,
+            ('C', 'F'): 1.5, ('B', 'E'): 1.5, ('D', 'E'): 1.5, ('E', 'F'): 1.5
+        },
+        "node_labels": {
+            'A': 'A\n(0)', 'B': 'B\n(4)', 'C': 'C\n(2)',
+            'D': 'D\n(∞)', 'E': 'E\n(∞)', 'F': 'F\n(∞)'
         },
         "current_event_type": "visit",
-        "current_event_details": "Visiting node A",
-        "current_event_data": {"u": "A"},
-        "distances": {"A": 0, "B": float('inf'), "C": float('inf'), "D": float('inf')}
+        "current_event_details": "Visiting Node C, considering edge C->D"
     }
-    fig_graph = render_graph(graph_snapshot_example, "Dijkstra Step")
-    plt.show()
 
-    graph_snapshot_edge_example = {
-        "graph": {
-            "A": [("B", 1), ("C", 4)],
-            "B": [("A", 1), ("C", 2), ("D", 5)],
-            "C": [("A", 4), ("B", 2), ("D", 1)],
-            "D": [("B", 5), ("C", 1)]
-        },
-        "current_event_type": "consider_edge",
-        "current_event_details": "Considering edge B-C with weight 2",
-        "current_event_data": {"u": "B", "v": "C", "weight": 2},
-        "distances": {"A": 0, "B": 1, "C": float('inf'), "D": float('inf')}
-    }
-    fig_graph_edge = render_graph(graph_snapshot_edge_example, "Dijkstra Step (Edge)")
-    plt.show()
+    fig_rich_graph = render_graph(rich_graph_snapshot, "Dijkstra's Algorithm")
+    plt.show() # Display the rich graph visualization
 
-    mst_graph_snapshot_example = {
-        "graph": {
-            "A": [("B", 1), ("C", 4)],
-            "B": [("A", 1), ("C", 2), ("D", 5)],
-            "C": [("A", 4), ("B", 2), ("D", 1)],
-            "D": [("B", 5), ("C", 1)]
+    # Example for Kruskal's with different colors
+    kruskal_snapshot = {
+        "graph_snapshot": {
+            "A": [("B", 7), ("D", 5)], "B": [("C", 8)], "D": [("F", 6)], "C": [("E", 5)], "E": [], "F": []
         },
-        "current_event_type": "add_mst_edge",
-        "current_event_details": "Adding edge A-B to MST",
-        "current_event_data": {"u": "A", "v": "B", "weight": 1},
-        "mst_edges": [("A", "B")]
+        "node_colors": {
+            'A': '#440154', 'B': '#440154', 'D': '#440154', 'F': '#440154', # Set 1
+            'C': '#21908d', 'E': '#21908d' # Set 2
+        },
+        "edge_colors": {
+            ('A', 'D'): '#333333', ('C', 'E'): '#333333', ('D', 'F'): '#333333',
+            ('A', 'B'): '#ff6666' # Rejected edge
+        },
+        "edge_widths": {
+            ('A', 'D'): 3.0, ('C', 'E'): 3.0, ('D', 'F'): 3.0, ('A', 'B'): 2.5
+        },
+        "node_labels": {'A':'A', 'B':'B', 'C':'C', 'D':'D', 'E':'E', 'F':'F'},
+        "current_event_type": "reject_edge",
+        "current_event_details": "Rejecting edge A-B (forms a cycle)"
     }
-    fig_mst_graph = render_graph(mst_graph_snapshot_example, "Kruskal Step (MST Edge)")
+    fig_kruskal_graph = render_graph(kruskal_snapshot, "Kruskal's Algorithm")
     plt.show()
 
