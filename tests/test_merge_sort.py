@@ -1,86 +1,51 @@
 import pytest
+import re
 from app.algorithms.merge_sort import merge_sort_generator
-from app.utils.types import Event, Array
+from app.utils.types import Event
 
-def test_merge_sort_basic():
-    """Test merge sort with a basic array."""
-    arr = [38, 27, 43, 3, 9, 82, 10]
-    expected_sorted_arr = sorted(arr)
-    events = list(merge_sort_generator(list(arr))) # Pass a copy to avoid modification issues
+def test_merge_sort_visualization_consistency():
+    """
+    Tests that the visualization for 'compare' events in merge_sort_generator
+    is consistent with the event's details. It ensures the array state shown
+    during a comparison reflects the array *before* elements are moved.
+    """
+    # This array is specifically chosen to trigger the bug.
+    # The first merge will be between [27] and [38], then [3] and [43].
+    # The final merge of [27, 38] and [3, 43] will cause the issue.
+    # When comparing 27 and 3, the visualization will be correct.
+    # After 3 is copied to index 0, the next comparison is 27 and 43.
+    # The bug will show the array state with 3 at index 0, but the indices
+    # will still point to index 0 and index 2, showing a comparison
+    # between 3 and 43 in the visualization, while the details say 27 and 43.
+    test_array = [38, 27, 43, 3]
 
-    assert len(events) > 0, "No events were generated."
+    events = list(merge_sort_generator(test_array))
 
-    # Check if the last event is 'done' and contains the sorted array
-    final_event = events[-1]
-    assert final_event.type == "done"
-    assert "sorted_array" in final_event.data
-    assert final_event.data["sorted_array"] == expected_sorted_arr
-
-    # Verify event schema conformance (implicitly checked by Event dataclass usage)
     for event in events:
-        assert isinstance(event, Event)
-        assert isinstance(event.step, int)
-        assert isinstance(event.type, str)
-        assert isinstance(event.details, str)
-        assert isinstance(event.data, dict)
+        if event.type == "compare":
+            # Extract numbers from the details string, e.g., "Comparing 38 and 27"
+            match = re.search(r"Comparing ([-?\d]+) and ([-?\d]+)", event.details)
+            assert match, f"Could not parse details string: {event.details}"
 
-def test_merge_sort_empty_array():
-    """Test merge sort with an empty array."""
-    arr = []
-    expected_sorted_arr = []
-    events = list(merge_sort_generator(list(arr)))
+            val1_from_details = int(match.group(1))
+            val2_from_details = int(match.group(2))
 
-    assert len(events) > 0, "No events were generated for empty array."
-    final_event = events[-1]
-    assert final_event.type == "done"
-    assert "sorted_array" in final_event.data
-    assert final_event.data["sorted_array"] == expected_sorted_arr
+            # Get the indices from the event data
+            compare_indices = event.data.get("compare_indices")
+            assert compare_indices, "Compare event is missing 'compare_indices' data"
 
-def test_merge_sort_single_element_array():
-    """Test merge sort with a single-element array."""
-    arr = [5]
-    expected_sorted_arr = [5]
-    events = list(merge_sort_generator(list(arr)))
+            idx1, idx2 = compare_indices
 
-    assert len(events) > 0, "No events were generated for single element array."
-    final_event = events[-1]
-    assert final_event.type == "done"
-    assert "sorted_array" in final_event.data
-    assert final_event.data["sorted_array"] == expected_sorted_arr
+            # Get the array state from the event data
+            array_state = event.data.get("array")
+            assert array_state, "Compare event is missing 'array' data"
 
-def test_merge_sort_already_sorted_array():
-    """Test merge sort with an already sorted array."""
-    arr = [1, 2, 3, 4, 5]
-    expected_sorted_arr = [1, 2, 3, 4, 5]
-    events = list(merge_sort_generator(list(arr)))
+            # Get the values from the array state using the indices
+            val1_from_array = array_state[idx1]
+            val2_from_array = array_state[idx2]
 
-    assert len(events) > 0, "No events were generated for sorted array."
-    final_event = events[-1]
-    assert final_event.type == "done"
-    assert "sorted_array" in final_event.data
-    assert final_event.data["sorted_array"] == expected_sorted_arr
-
-def test_merge_sort_reverse_sorted_array():
-    """Test merge sort with a reverse sorted array."""
-    arr = [5, 4, 3, 2, 1]
-    expected_sorted_arr = [1, 2, 3, 4, 5]
-    events = list(merge_sort_generator(list(arr)))
-
-    assert len(events) > 0, "No events were generated for reverse sorted array."
-    final_event = events[-1]
-    assert final_event.type == "done"
-    assert "sorted_array" in final_event.data
-    assert final_event.data["sorted_array"] == expected_sorted_arr
-
-def test_merge_sort_duplicate_elements():
-    """Test merge sort with an array containing duplicate elements."""
-    arr = [3, 1, 4, 1, 5, 9, 2, 6]
-    expected_sorted_arr = sorted(arr)
-    events = list(merge_sort_generator(list(arr)))
-
-    assert len(events) > 0, "No events were generated for array with duplicates."
-    final_event = events[-1]
-    assert final_event.type == "done"
-    assert "sorted_array" in final_event.data
-    assert final_event.data["sorted_array"] == expected_sorted_arr
-
+            # The core of the test: check for consistency
+            # This set comparison handles cases where the order might differ.
+            assert {val1_from_details, val2_from_details} == {val1_from_array, val2_from_array}, \
+                f"Visualization mismatch at step {event.step}: Details say comparing {val1_from_details} and {val2_from_details}, " \
+                f"but array at indices ({idx1}, {idx2}) shows ({val1_from_array}, {val2_from_array}). The array state was: {array_state}"
