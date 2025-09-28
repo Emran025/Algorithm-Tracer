@@ -57,9 +57,14 @@ def linear_search_generator(arr: Array, target: Any) -> Generator[Event, None, N
         )
         step_count += 1
 
+    final_data = _create_visual_state(arr, found_index=found_at_index if found_at_index != -1 else None)
+    final_data["found"] = found_at_index != -1
+    if found_at_index != -1:
+        final_data["found_index"] = found_at_index
+
     yield Event(
         step=step_count, type="done", details="Search completed",
-        data=_create_visual_state(arr, found_index=found_at_index if found_at_index != -1 else None)
+        data=final_data
     )
 
 if __name__ == '__main__':

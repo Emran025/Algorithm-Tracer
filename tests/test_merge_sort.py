@@ -6,17 +6,14 @@ def test_merge_sort_basic():
     """Test merge sort with a basic array."""
     arr = [38, 27, 43, 3, 9, 82, 10]
     expected_sorted_arr = sorted(arr)
-    events = list(merge_sort_generator(list(arr))) # Pass a copy to avoid modification issues
+    events = list(merge_sort_generator(list(arr)))
 
     assert len(events) > 0, "No events were generated."
-
-    # Check if the last event is 'done' and contains the sorted array
     final_event = events[-1]
     assert final_event.type == "done"
-    assert "sorted_array" in final_event.data
-    assert final_event.data["sorted_array"] == expected_sorted_arr
+    assert "array" in final_event.data
+    assert final_event.data["array"] == expected_sorted_arr
 
-    # Verify event schema conformance (implicitly checked by Event dataclass usage)
     for event in events:
         assert isinstance(event, Event)
         assert isinstance(event.step, int)
@@ -33,8 +30,8 @@ def test_merge_sort_empty_array():
     assert len(events) > 0, "No events were generated for empty array."
     final_event = events[-1]
     assert final_event.type == "done"
-    assert "sorted_array" in final_event.data
-    assert final_event.data["sorted_array"] == expected_sorted_arr
+    assert "array" in final_event.data
+    assert final_event.data["array"] == expected_sorted_arr
 
 def test_merge_sort_single_element_array():
     """Test merge sort with a single-element array."""
@@ -45,8 +42,8 @@ def test_merge_sort_single_element_array():
     assert len(events) > 0, "No events were generated for single element array."
     final_event = events[-1]
     assert final_event.type == "done"
-    assert "sorted_array" in final_event.data
-    assert final_event.data["sorted_array"] == expected_sorted_arr
+    assert "array" in final_event.data
+    assert final_event.data["array"] == expected_sorted_arr
 
 def test_merge_sort_already_sorted_array():
     """Test merge sort with an already sorted array."""
@@ -57,8 +54,8 @@ def test_merge_sort_already_sorted_array():
     assert len(events) > 0, "No events were generated for sorted array."
     final_event = events[-1]
     assert final_event.type == "done"
-    assert "sorted_array" in final_event.data
-    assert final_event.data["sorted_array"] == expected_sorted_arr
+    assert "array" in final_event.data
+    assert final_event.data["array"] == expected_sorted_arr
 
 def test_merge_sort_reverse_sorted_array():
     """Test merge sort with a reverse sorted array."""
@@ -69,8 +66,8 @@ def test_merge_sort_reverse_sorted_array():
     assert len(events) > 0, "No events were generated for reverse sorted array."
     final_event = events[-1]
     assert final_event.type == "done"
-    assert "sorted_array" in final_event.data
-    assert final_event.data["sorted_array"] == expected_sorted_arr
+    assert "array" in final_event.data
+    assert final_event.data["array"] == expected_sorted_arr
 
 def test_merge_sort_duplicate_elements():
     """Test merge sort with an array containing duplicate elements."""
@@ -81,6 +78,5 @@ def test_merge_sort_duplicate_elements():
     assert len(events) > 0, "No events were generated for array with duplicates."
     final_event = events[-1]
     assert final_event.type == "done"
-    assert "sorted_array" in final_event.data
-    assert final_event.data["sorted_array"] == expected_sorted_arr
-
+    assert "array" in final_event.data
+    assert final_event.data["array"] == expected_sorted_arr

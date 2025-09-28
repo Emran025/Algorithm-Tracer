@@ -12,8 +12,8 @@ def test_quick_sort_basic():
 
     final_event = events[-1]
     assert final_event.type == "done"
-    assert "sorted_array" in final_event.data
-    assert final_event.data["sorted_array"] == expected_sorted_arr
+    assert "array" in final_event.data
+    assert final_event.data["array"] == expected_sorted_arr
 
     for event in events:
         assert isinstance(event, Event)
@@ -31,8 +31,8 @@ def test_quick_sort_empty_array():
     assert len(events) > 0, "No events were generated for empty array."
     final_event = events[-1]
     assert final_event.type == "done"
-    assert "sorted_array" in final_event.data
-    assert final_event.data["sorted_array"] == expected_sorted_arr
+    assert "array" in final_event.data
+    assert final_event.data["array"] == expected_sorted_arr
 
 def test_quick_sort_single_element_array():
     """Test quick sort with a single-element array."""
@@ -43,8 +43,8 @@ def test_quick_sort_single_element_array():
     assert len(events) > 0, "No events were generated for single element array."
     final_event = events[-1]
     assert final_event.type == "done"
-    assert "sorted_array" in final_event.data
-    assert final_event.data["sorted_array"] == expected_sorted_arr
+    assert "array" in final_event.data
+    assert final_event.data["array"] == expected_sorted_arr
 
 def test_quick_sort_already_sorted_array():
     """Test quick sort with an already sorted array."""
@@ -55,8 +55,8 @@ def test_quick_sort_already_sorted_array():
     assert len(events) > 0, "No events were generated for sorted array."
     final_event = events[-1]
     assert final_event.type == "done"
-    assert "sorted_array" in final_event.data
-    assert final_event.data["sorted_array"] == expected_sorted_arr
+    assert "array" in final_event.data
+    assert final_event.data["array"] == expected_sorted_arr
 
 def test_quick_sort_reverse_sorted_array():
     """Test quick sort with a reverse sorted array."""
@@ -67,8 +67,8 @@ def test_quick_sort_reverse_sorted_array():
     assert len(events) > 0, "No events were generated for reverse sorted array."
     final_event = events[-1]
     assert final_event.type == "done"
-    assert "sorted_array" in final_event.data
-    assert final_event.data["sorted_array"] == expected_sorted_arr
+    assert "array" in final_event.data
+    assert final_event.data["array"] == expected_sorted_arr
 
 def test_quick_sort_duplicate_elements():
     """Test quick sort with an array containing duplicate elements."""
@@ -79,6 +79,5 @@ def test_quick_sort_duplicate_elements():
     assert len(events) > 0, "No events were generated for array with duplicates."
     final_event = events[-1]
     assert final_event.type == "done"
-    assert "sorted_array" in final_event.data
-    assert final_event.data["sorted_array"] == expected_sorted_arr
-
+    assert "array" in final_event.data
+    assert final_event.data["array"] == expected_sorted_arr

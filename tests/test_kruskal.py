@@ -79,4 +79,3 @@ def test_kruskal_all_events_conform_schema():
         assert isinstance(event.type, str)
         assert isinstance(event.details, str)
         assert isinstance(event.data, dict)
-

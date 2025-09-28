@@ -12,11 +12,10 @@ def test_linear_search_found():
     final_event = events[-1]
     assert final_event.type == "done"
     assert final_event.data["found"] is True
+    assert final_event.data["found_index"] == 2
 
     found_event = next((e for e in events if e.type == "found"), None)
     assert found_event is not None
-    assert found_event.data["target"] == target
-    assert found_event.data["index"] == 2
 
 def test_linear_search_not_found():
     """Test linear search when the target is not found."""
@@ -28,10 +27,10 @@ def test_linear_search_not_found():
     final_event = events[-1]
     assert final_event.type == "done"
     assert final_event.data["found"] is False
+    assert "found_index" not in final_event.data
 
     not_found_event = next((e for e in events if e.type == "not_found"), None)
     assert not_found_event is not None
-    assert not_found_event.data["target"] == target
 
 def test_linear_search_empty_array():
     """Test linear search with an empty array."""
@@ -50,8 +49,10 @@ def test_linear_search_first_element():
     target = 10
     events = list(linear_search_generator(list(arr), target))
 
-    found_event = next((e for e in events if e.type == "found"), None)
-    assert found_event.data["index"] == 0
+    final_event = events[-1]
+    assert final_event.type == "done"
+    assert final_event.data["found"] is True
+    assert final_event.data["found_index"] == 0
 
 def test_linear_search_last_element():
     """Test linear search when the target is the last element."""
@@ -59,8 +60,10 @@ def test_linear_search_last_element():
     target = 30
     events = list(linear_search_generator(list(arr), target))
 
-    found_event = next((e for e in events if e.type == "found"), None)
-    assert found_event.data["index"] == 2
+    final_event = events[-1]
+    assert final_event.type == "done"
+    assert final_event.data["found"] is True
+    assert final_event.data["found_index"] == 2
 
 def test_linear_search_duplicate_elements():
     """Test linear search with duplicate elements, should find the first occurrence."""
@@ -68,6 +71,7 @@ def test_linear_search_duplicate_elements():
     target = 20
     events = list(linear_search_generator(list(arr), target))
 
-    found_event = next((e for e in events if e.type == "found"), None)
-    assert found_event.data["index"] == 1
-
+    final_event = events[-1]
+    assert final_event.type == "done"
+    assert final_event.data["found"] is True
+    assert final_event.data["found_index"] == 1

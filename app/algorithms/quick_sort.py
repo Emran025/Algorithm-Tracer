@@ -144,9 +144,11 @@ def quick_sort_generator(arr: Array) -> Generator[Event, None, None]:
 
     yield from _quick_sort(0, n - 1)
 
+    final_data = _create_visual_state(current_arr, sorted_indices)
+    final_data["array"] = current_arr
     yield Event(
         step=step_count, type="done", details="Quick Sort completed",
-        data=_create_visual_state(current_arr, sorted_indices)
+        data=final_data
     )
 
 if __name__ == '__main__':

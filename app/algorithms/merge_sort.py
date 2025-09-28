@@ -151,9 +151,11 @@ def merge_sort_generator(arr: Array) -> Generator[Event, None, None]:
 
     yield from _merge_sort(current_arr, 0, n - 1)
 
+    final_data = _create_visual_state(current_arr, sorted_range=(0, n - 1))
+    final_data["array"] = current_arr
     yield Event(
         step=step_count, type="done", details="Merge Sort completed",
-        data=_create_visual_state(current_arr, sorted_range=(0, n - 1))
+        data=final_data
     )
 
 if __name__ == '__main__':
