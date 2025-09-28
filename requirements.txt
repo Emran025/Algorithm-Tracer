@@ -1,0 +1,6 @@
+streamlit
+networkx
+matplotlib
+numpy
+pytest
+

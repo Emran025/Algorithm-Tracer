@@ -1,0 +1,42 @@
+[project]
+name = "AlgoVisEdu"
+version = "0.1.0"
+description = "Interactive educational application for algorithm visualization and step-by-step explanation."
+authors = [
+    { name = "Manus AI", email = "ai@manus.im" }
+]
+dependencies = [
+    "streamlit",
+    "networkx",
+    "matplotlib",
+    "numpy",
+    "pytest",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "flake8",
+    "isort",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+pythonpath = ["app"]
+
+[tool.black]
+line-length = 100
+target-version = ['py310']
+
+[tool.isort]
+profile = "black"
+line_length = 100
+known_first_party = ["app"]
+
+[tool.flake8]
+max-line-length = 100
+exclude = [".git", "__pycache__", "docs", "build", "dist"]
+

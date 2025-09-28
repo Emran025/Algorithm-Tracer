@@ -1,0 +1,40 @@
+# This script collects all file contents from the project structure into a single text file
+
+# Define output file
+$outputFile = "project-contents.txt"
+
+Write-Host "جمع محتويات الملفات إلى $outputFile ..." -ForegroundColor Cyan
+
+# Initialize output file with a header
+"=== محتويات مشروع technical_laboratory ===`n" | Out-File -FilePath $outputFile -Encoding UTF8
+"تم إنشاء هذا الملف في: $(Get-Date)`n" | Out-File -FilePath $outputFile -Encoding UTF8 -Append
+
+# Function to process files and add their contents to the output
+function Process-Files {
+    param([string]$path)
+    
+    Get-ChildItem -Path $path -File | ForEach-Object {
+        $relativePath = $_.FullName.Substring((Get-Location).Path.Length + 1)
+        "`n" + "="*80 | Out-File -FilePath $outputFile -Encoding UTF8 -Append
+        "ملف: $relativePath" | Out-File -FilePath $outputFile -Encoding UTF8 -Append
+        "="*80 | Out-File -FilePath $outputFile -Encoding UTF8 -Append
+        
+        try {
+            # Try to read the file as text
+            $content = Get-Content -Path $_.FullName -Raw -Encoding UTF8
+            $content | Out-File -FilePath $outputFile -Encoding UTF8 -Append
+        }
+        catch {
+            # If it's a binary file, note that instead
+            "[ملف غير نصي - لا يمكن عرض المحتوى]" | Out-File -FilePath $outputFile -Encoding UTF8 -Append
+        }
+    }
+    
+    # Process subdirectories recursively
+    Get-ChildItem -Path $path -Directory | ForEach-Object {
+        Process-Files -path $_.FullName
+    }
+}
+
+# Start processing from the current directory
+Process-Files -path "."
