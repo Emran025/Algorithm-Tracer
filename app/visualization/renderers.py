@@ -4,18 +4,21 @@ import numpy as np
 from typing import List, Dict, Any, Tuple, Optional
 
 def render_array_bars(snapshot: Dict[str, Any], title: str = "Array Visualization") -> plt.Figure:
-    """Renders an array as a bar chart, highlighting specific indices.
+    """Renders an array as a bar chart using rich visual metadata.
+
+    This function is declarative: it draws the bar chart based on the colors
+    provided in the snapshot's 'bar_colors' list.
 
     Args:
-        snapshot (Dict[str, Any]): The snapshot dictionary from the VisualizationEngine,
-                                   expected to contain an 'array' key and 'current_event_data'.
+        snapshot (Dict[str, Any]): The snapshot dictionary from the VisualizationEngine.
+                                   Expected to contain 'array' and 'bar_colors' keys.
         title (str): Title for the plot.
 
     Returns:
         plt.Figure: A Matplotlib Figure object.
     """
     arr = snapshot.get("array", [])
-    event_data = snapshot.get("current_event_data", {})
+    bar_colors = snapshot.get("bar_colors", [])
 
     fig, ax = plt.subplots(figsize=(10, 6))
     if not arr:
@@ -24,45 +27,27 @@ def render_array_bars(snapshot: Dict[str, Any], title: str = "Array Visualizatio
         return fig
 
     x = np.arange(len(arr))
-    bars = ax.bar(x, arr, color='skyblue')
 
-    # Highlight elements involved in the current event
-    highlight_color = 'red'
-    compare_color = 'orange'
-    pivot_color = 'purple'
-    source_color = 'green'
+    # Use the provided colors, or default to skyblue if not available
+    colors = bar_colors if len(bar_colors) == len(arr) else ['skyblue'] * len(arr)
 
-    if snapshot.get("current_event_type") == "compare":
-        i, j = event_data.get("i"), event_data.get("j")
-        if i is not None and 0 <= i < len(arr): bars[i].set_color(compare_color)
-        if j is not None and 0 <= j < len(arr): bars[j].set_color(compare_color)
-    elif snapshot.get("current_event_type") == "swap":
-        i, j = event_data.get("i"), event_data.get("j")
-        if i is not None and 0 <= i < len(arr): bars[i].set_color(highlight_color)
-        if j is not None and 0 <= j < len(arr): bars[j].set_color(highlight_color)
-    elif snapshot.get("current_event_type") == "overwrite":
-        idx = event_data.get("index")
-        src_idx = event_data.get("source_index")
-        if idx is not None and 0 <= idx < len(arr): bars[idx].set_color(highlight_color)
-        if src_idx is not None and 0 <= src_idx < len(arr): bars[src_idx].set_color(source_color)
-    elif snapshot.get("current_event_type") == "set_pivot":
-        idx = event_data.get("index")
-        if idx is not None and 0 <= idx < len(arr): bars[idx].set_color(pivot_color)
-    elif snapshot.get("current_event_type") == "found":
-        idx = event_data.get("index")
-        if idx is not None and 0 <= idx < len(arr): bars[idx].set_color('lime')
+    bars = ax.bar(x, arr, color=colors, edgecolor='black', linewidth=0.7)
 
     ax.set_xticks(x)
-    ax.set_xticklabels([str(val) for val in arr]) # Show values on x-axis labels
-    ax.set_xlabel("Index / Value")
+    # Set X-tick labels to be the index of the array
+    ax.set_xticklabels(x)
+    ax.set_xlabel("Index")
     ax.set_ylabel("Value")
-    ax.set_title(f"{title} - Step: {snapshot.get('current_event_details', '')}")
-    ax.set_ylim(0, max(arr) * 1.2 if arr else 1)
+    ax.set_title(f"{title}: {snapshot.get('current_event_details', '')}", fontsize=14, weight='bold')
+
+    # Adjust y-limit to provide more space for labels
+    max_val = max(arr) if arr else 1
+    ax.set_ylim(0, max_val * 1.25)
 
     # Add value labels on top of bars
-    for bar in bars:
+    for i, bar in enumerate(bars):
         yval = bar.get_height()
-        ax.text(bar.get_x() + bar.get_width()/2, yval + 0.05, round(yval, 2), ha='center', va='bottom')
+        ax.text(bar.get_x() + bar.get_width()/2, yval + (max_val * 0.02), arr[i], ha='center', va='bottom', fontsize=9)
 
     plt.tight_layout()
     return fig
@@ -156,17 +141,22 @@ def render_graph(snapshot: Dict[str, Any], title: str = "Graph Visualization") -
 
 
 if __name__ == '__main__':
-    # Example usage for array rendering
-    array_snapshot_example = {
-        "array": [10, 20, 5, 30, 15],
-        "current_event_type": "compare",
-        "current_event_details": "Comparing elements at index 1 and 2",
-        "current_event_data": {"i": 1, "j": 2}
+    # --- Example for the new, declarative array renderer ---
+    rich_array_snapshot = {
+        "array": [3, 1, 4, 1, 5, 9, 2, 6],
+        "bar_colors": [
+            '#cccccc', '#cccccc', '#cccccc', '#cccccc', # Partition
+            '#9370db', # Pivot
+            '#ff9933', # Compare
+            'skyblue', 'skyblue'
+        ],
+        "current_event_details": "Comparing 9 with pivot 5"
     }
-    fig_array = render_array_bars(array_snapshot_example, "Merge Sort Step")
-    # plt.show() # Uncomment to display during local testing
+    fig_rich_array = render_array_bars(rich_array_snapshot, "Quick Sort")
+    print("Displaying declarative array renderer example...")
+    plt.show()
 
-    # Example usage for the new, rich graph rendering
+    # --- Example for the declarative graph renderer (Dijkstra) ---
     rich_graph_snapshot = {
         "graph_snapshot": {
             'A': [('B', 4), ('C', 2)], 'B': [('A', 4), ('E', 3)],
@@ -174,49 +164,22 @@ if __name__ == '__main__':
             'E': [('B', 3), ('D', 3), ('F', 1)], 'F': [('C', 4), ('E', 1)]
         },
         "node_colors": {
-            'A': '#cccccc', 'B': '#cccccc', 'C': '#ff9933', 'D': '#66b3ff',
-            'E': '#66b3ff', 'F': '#66b3ff'
+            'A': '#2ca02c', 'B': '#2ca02c', 'C': '#2ca02c',
+            'D': '#2ca02c', 'E': '#e6e6e6', 'F': '#2ca02c'
         },
         "edge_colors": {
-            ('A', 'B'): '#333333', ('A', 'C'): '#333333', ('C', 'D'): '#3399ff',
-            ('C', 'F'): '#b3b3b3', ('B', 'E'): '#b3b3b3', ('D', 'E'): '#b3b3b3',
-            ('E', 'F'): '#b3b3b3'
+            ('A', 'C'): '#2ca02c', ('C', 'F'): '#2ca02c', ('F', 'E'): '#e6e6e6',
+            ('A', 'B'): '#2ca02c', ('C', 'D'): '#2ca02c', ('B', 'E'): '#e6e6e6',
+            ('D', 'E'): '#e6e6e6'
         },
-        "edge_widths": {
-            ('A', 'B'): 3.0, ('A', 'C'): 3.0, ('C', 'D'): 2.5,
-            ('C', 'F'): 1.5, ('B', 'E'): 1.5, ('D', 'E'): 1.5, ('E', 'F'): 1.5
-        },
+        "edge_widths": { t: 3.0 if c == '#2ca02c' else 1.0 for t, c in rich_graph_snapshot["edge_colors"].items() },
         "node_labels": {
             'A': 'A\n(0)', 'B': 'B\n(4)', 'C': 'C\n(2)',
-            'D': 'D\n(∞)', 'E': 'E\n(∞)', 'F': 'F\n(∞)'
+            'D': 'D\n(4)', 'E': 'E\n(7)', 'F': 'F\n(6)'
         },
-        "current_event_type": "visit",
-        "current_event_details": "Visiting Node C, considering edge C->D"
+        "current_event_details": "Algorithm Completed"
     }
-
-    fig_rich_graph = render_graph(rich_graph_snapshot, "Dijkstra's Algorithm")
-    plt.show() # Display the rich graph visualization
-
-    # Example for Kruskal's with different colors
-    kruskal_snapshot = {
-        "graph_snapshot": {
-            "A": [("B", 7), ("D", 5)], "B": [("C", 8)], "D": [("F", 6)], "C": [("E", 5)], "E": [], "F": []
-        },
-        "node_colors": {
-            'A': '#440154', 'B': '#440154', 'D': '#440154', 'F': '#440154', # Set 1
-            'C': '#21908d', 'E': '#21908d' # Set 2
-        },
-        "edge_colors": {
-            ('A', 'D'): '#333333', ('C', 'E'): '#333333', ('D', 'F'): '#333333',
-            ('A', 'B'): '#ff6666' # Rejected edge
-        },
-        "edge_widths": {
-            ('A', 'D'): 3.0, ('C', 'E'): 3.0, ('D', 'F'): 3.0, ('A', 'B'): 2.5
-        },
-        "node_labels": {'A':'A', 'B':'B', 'C':'C', 'D':'D', 'E':'E', 'F':'F'},
-        "current_event_type": "reject_edge",
-        "current_event_details": "Rejecting edge A-B (forms a cycle)"
-    }
-    fig_kruskal_graph = render_graph(kruskal_snapshot, "Kruskal's Algorithm")
+    fig_rich_graph = render_graph(rich_graph_snapshot, "Dijkstra's Algorithm (Final State)")
+    print("Displaying declarative graph renderer example (Dijkstra)...")
     plt.show()
 
