@@ -20,14 +20,14 @@ def playback_controls(on_play: Callable, on_pause: Callable, on_step_forward: Ca
     col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 2])
  
     with col1:
-        if st.button(" ⏮ Back"): on_step_back()
+        if st.button(" ⏮ Back "): on_step_back()
     with col2:
         if is_playing:
-            if st.button("⏸ Pause"): on_pause()
+            if st.button(" ⏸ Pause "): on_pause()
         else:
-            if st.button("◀ Play"): on_play()
+            if st.button(" ◀ Play "): on_play()
     with col3:
-        if st.button("Forward ⏭ "): on_step_forward()
+        if st.button(" Forward ⏭ "): on_step_forward()
     with col4:
         st.selectbox(
             "Speed",
