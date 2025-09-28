@@ -1,156 +1,180 @@
-from typing import List, Generator, Any
+from typing import List, Generator, Any, Set, Dict, Optional, Tuple
 from app.utils.types import Event, Array
 
-def merge_sort_generator(arr: Array) -> Generator[Event, None, None]:
-    """Generates events for visualizing the Merge Sort algorithm.
+# --- Visualization Constants ---
+DEFAULT_COLOR = "skyblue"
+LEFT_PARTITION_COLOR = "#add8e6"   # Light blue for the left sub-array
+RIGHT_PARTITION_COLOR = "#ffb6c1" # Light pink for the right sub-array
+COMPARE_COLOR = "#ff9933"         # Orange for elements being compared
+COPY_BACK_COLOR = "#9370db"       # Medium purple for the element being copied back
+SORTED_COLOR = "#66cc66"          # Green for the final sorted array
 
-    Args:
-        arr (Array): The list of numbers to be sorted.
-
-    Yields:
-        Event: An event object representing a step in the algorithm.
-    """
+def _create_visual_state(
+    arr: Array,
+    sorted_range: Optional[Tuple[int, int]] = None,
+    left_partition: Optional[Tuple[int, int]] = None,
+    right_partition: Optional[Tuple[int, int]] = None,
+    compare_indices: Optional[Tuple[int, int]] = None,
+    copy_back_index: Optional[int] = None,
+) -> Dict[str, Any]:
+    """Creates a rich visual state for the array at each step of Merge Sort."""
     n = len(arr)
-    temp_arr = list(arr) # Create a temporary array for merging
+    bar_colors = [DEFAULT_COLOR] * n
+
+    if left_partition:
+        low, high = left_partition
+        for i in range(low, high + 1): bar_colors[i] = LEFT_PARTITION_COLOR
+    if right_partition:
+        low, high = right_partition
+        for i in range(low, high + 1): bar_colors[i] = RIGHT_PARTITION_COLOR
+
+    if compare_indices:
+        i, j = compare_indices
+        bar_colors[i] = COMPARE_COLOR
+        bar_colors[j] = COMPARE_COLOR
+
+    if copy_back_index is not None:
+        bar_colors[copy_back_index] = COPY_BACK_COLOR
+
+    if sorted_range:
+        low, high = sorted_range
+        for i in range(low, high + 1): bar_colors[i] = SORTED_COLOR
+
+    return {"array": list(arr), "bar_colors": bar_colors}
+
+def merge_sort_generator(arr: Array) -> Generator[Event, None, None]:
+    """Generates events for visualizing the Merge Sort algorithm with rich visual metadata."""
+    n = len(arr)
+    current_arr = list(arr)
     step_count = 0
 
     yield Event(
-        step=step_count,
-        type="snapshot",
-        details="Initial array state",
-        data={"array_snapshot": list(arr)}
+        step=step_count, type="start", details="Initial array state",
+        data=_create_visual_state(current_arr)
     )
     step_count += 1
 
-    def _merge_sort(current_arr: Array, left: int, right: int) -> None:
+    def _merge_sort(sub_arr: Array, left: int, right: int) -> Generator[Event, None, None]:
         nonlocal step_count
         if left < right:
             mid = (left + right) // 2
 
             yield Event(
-                step=step_count,
-                type="divide",
-                details=f"Dividing array from index {left} to {right} into two halves",
-                data={"left": left, "right": right, "mid": mid, "array_snapshot": list(current_arr)}
+                step=step_count, type="divide", details=f"Dividing into partitions [{left}-{mid}] and [{mid+1}-{right}]",
+                data=_create_visual_state(
+                    sub_arr, left_partition=(left, mid), right_partition=(mid + 1, right)
+                )
             )
             step_count += 1
 
-            yield from _merge_sort(current_arr, left, mid)
-            yield from _merge_sort(current_arr, mid + 1, right)
+            yield from _merge_sort(sub_arr, left, mid)
+            yield from _merge_sort(sub_arr, mid + 1, right)
+            yield from _merge(sub_arr, left, mid, right)
 
-            yield from _merge(current_arr, left, mid, right)
-
-    def _merge(current_arr: Array, left: int, mid: int, right: int) -> Generator[Event, None, None]:
+    def _merge(sub_arr: Array, left: int, mid: int, right: int) -> Generator[Event, None, None]:
         nonlocal step_count
-        i = left
-        j = mid + 1
-        k = left
 
         yield Event(
-            step=step_count,
-            type="merge_start",
-            details=f"Starting merge for sub-array from {left} to {right}",
-            data={"left": left, "mid": mid, "right": right, "array_snapshot": list(current_arr)}
+            step=step_count, type="merge", details=f"Merging partitions [{left}-{mid}] and [{mid+1}-{right}]",
+            data=_create_visual_state(
+                sub_arr, left_partition=(left, mid), right_partition=(mid + 1, right)
+            )
         )
         step_count += 1
 
-        while i <= mid and j <= right:
+        left_copy = sub_arr[left : mid + 1]
+        right_copy = sub_arr[mid + 1 : right + 1]
+
+        i = 0  # Pointer for left_copy
+        j = 0  # Pointer for right_copy
+        k = left # Pointer for main array
+
+        while i < len(left_copy) and j < len(right_copy):
             yield Event(
-                step=step_count,
-                type="compare",
-                details=f"Comparing elements at index {i} ({current_arr[i]}) and {j} ({current_arr[j]})",
-                data={"i": i, "j": j, "value_i": current_arr[i], "value_j": current_arr[j], "array_snapshot": list(current_arr)}
+                step=step_count, type="compare",
+                details=f"Comparing {left_copy[i]} and {right_copy[j]}",
+                data=_create_visual_state(
+                    sub_arr, left_partition=(left, mid), right_partition=(mid + 1, right),
+                    compare_indices=(left + i, mid + 1 + j)
+                )
             )
             step_count += 1
 
-            if current_arr[i] <= current_arr[j]:
-                temp_arr[k] = current_arr[i]
-                yield Event(
-                    step=step_count,
-                    type="overwrite",
-                    details=f"Overwriting temp_arr[{k}] with current_arr[{i}] ({current_arr[i]})",
-                    data={"index": k, "value": current_arr[i], "source_index": i, "array_snapshot": list(current_arr)}
-                )
-                step_count += 1
+            if left_copy[i] <= right_copy[j]:
+                sub_arr[k] = left_copy[i]
                 i += 1
             else:
-                temp_arr[k] = current_arr[j]
-                yield Event(
-                    step=step_count,
-                    type="overwrite",
-                    details=f"Overwriting temp_arr[{k}] with current_arr[{j}] ({current_arr[j]})",
-                    data={"index": k, "value": current_arr[j], "source_index": j, "array_snapshot": list(current_arr)}
-                )
-                step_count += 1
+                sub_arr[k] = right_copy[j]
                 j += 1
+
+            yield Event(
+                step=step_count, type="copy_back", details=f"Copying {sub_arr[k]} to sorted position {k}",
+                data=_create_visual_state(
+                    sub_arr, left_partition=(left, mid), right_partition=(mid + 1, right),
+                    copy_back_index=k
+                )
+            )
+            step_count += 1
             k += 1
 
-        while i <= mid:
-            temp_arr[k] = current_arr[i]
+        while i < len(left_copy):
+            sub_arr[k] = left_copy[i]
             yield Event(
-                step=step_count,
-                type="overwrite",
-                details=f"Copying remaining element current_arr[{i}] ({current_arr[i]}) to temp_arr[{k}]",
-                data={"index": k, "value": current_arr[i], "source_index": i, "array_snapshot": list(current_arr)}
+                step=step_count, type="copy_back", details=f"Copying remaining {sub_arr[k]} to position {k}",
+                data=_create_visual_state(
+                    sub_arr, left_partition=(left, mid), right_partition=(mid + 1, right),
+                    copy_back_index=k
+                )
             )
             step_count += 1
             i += 1
             k += 1
 
-        while j <= right:
-            temp_arr[k] = current_arr[j]
+        while j < len(right_copy):
+            sub_arr[k] = right_copy[j]
             yield Event(
-                step=step_count,
-                type="overwrite",
-                details=f"Copying remaining element current_arr[{j}] ({current_arr[j]}) to temp_arr[{k}]",
-                data={"index": k, "value": current_arr[j], "source_index": j, "array_snapshot": list(current_arr)}
+                step=step_count, type="copy_back", details=f"Copying remaining {sub_arr[k]} to position {k}",
+                data=_create_visual_state(
+                    sub_arr, left_partition=(left, mid), right_partition=(mid + 1, right),
+                    copy_back_index=k
+                )
             )
             step_count += 1
             j += 1
             k += 1
 
-        for x in range(left, right + 1):
-            current_arr[x] = temp_arr[x]
-            yield Event(
-                step=step_count,
-                type="copy_back",
-                details=f"Copying temp_arr[{x}] ({temp_arr[x]}) back to current_arr[{x}]",
-                data={"index": x, "value": temp_arr[x], "array_snapshot": list(current_arr)}
-            )
-            step_count += 1
-
         yield Event(
-            step=step_count,
-            type="merge_end",
-            details=f"Finished merging sub-array from {left} to {right}",
-            data={"left": left, "right": right, "array_snapshot": list(current_arr)}
+            step=step_count, type="sorted", details=f"Partition [{left}-{right}] is now sorted",
+            data=_create_visual_state(sub_arr, sorted_range=(left, right))
         )
         step_count += 1
 
-    # Initial call to the recursive merge sort function
-    yield from _merge_sort(arr, 0, n - 1)
+    yield from _merge_sort(current_arr, 0, n - 1)
 
     yield Event(
-        step=step_count,
-        type="done",
-        details="Merge Sort completed",
-        data={"sorted_array": list(arr)}
+        step=step_count, type="done", details="Merge Sort completed",
+        data=_create_visual_state(current_arr, sorted_range=(0, n - 1))
     )
 
-
 if __name__ == '__main__':
-    # Example usage and verification
     test_array = [38, 27, 43, 3, 9, 82, 10]
     print(f"Original array: {test_array}")
     events = list(merge_sort_generator(test_array))
 
-    print("\n--- Events ---")
-    for event in events:
-        print(event.to_json_serializable())
+    print(f"\n--- Generated {len(events)} events ---")
+    for i, event in enumerate(events):
+        print(f"Step {i}: {event.type} - {event.details}")
+        assert "bar_colors" in event.data, f"Event {i} is missing 'bar_colors'"
+        assert "array" in event.data, f"Event {i} is missing 'array'"
+    print("All events contain rich visual data.")
 
+    final_event = events[-1]
+    final_data = final_event.data
     print("\n--- Final Array ---")
-    final_array_event = next(e for e in reversed(events) if e.type == "done")
-    print(final_array_event.data["sorted_array"])
-    assert final_array_event.data["sorted_array"] == sorted([38, 27, 43, 3, 9, 82, 10])
+    print(final_data["array"])
+
+    assert final_data["array"] == sorted(test_array)
     print("Assertion passed: Array is sorted correctly.")
 
+    assert all(c == SORTED_COLOR for c in final_data["bar_colors"])
+    print("Assertion passed: Final state has all bars colored as sorted.")

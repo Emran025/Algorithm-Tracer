@@ -80,78 +80,21 @@ class VisualizationEngine:
         return self.current_event
 
     def get_snapshot(self) -> Dict[str, Any]:
-        """Returns a minimal renderable state (snapshot) for the current step.
+        """Returns the renderable state (snapshot) for the current step.
 
-        Finds the most recent full snapshot (array_snapshot or graph_snapshot) at or
-        before the current step, then re-applies only the modifications that occur
-        after that snapshot up to the current step.
+        With the new rich-event architecture, this method simply extracts the data
+        from the current event and adds context for the renderer.
         """
-        snapshot_data: Dict[str, Any] = {}
-        current_array: Optional[Array] = None
-        current_graph: Optional[Graph] = None
+        event = self.current_event
 
-        # Find the most recent full snapshot (and remember its index)
-        snapshot_index: Optional[int] = None
-        for i in range(self._current_step_index + 1):
-            event = self._trace[i]
-            if "array_snapshot" in event.data:
-                current_array = list(event.data["array_snapshot"])
-                current_graph = None
-                snapshot_index = i
-            elif "graph_snapshot" in event.data:
-                # deep copy via json to avoid accidental references
-                current_graph = json.loads(json.dumps(event.data["graph_snapshot"]))
-                current_array = None
-                snapshot_index = i
+        # The event's data field now contains the complete visual state.
+        snapshot_data = event.data.copy()
 
-        # If we found a snapshot, replay only events after it. Otherwise start at 0.
-        start_index = 0 if snapshot_index is None else (snapshot_index + 1)
-
-        # Apply modifications from start_index up to the current step index
-        for i in range(start_index, self._current_step_index + 1):
-            event = self._trace[i]
-
-            if current_array is not None:
-                # Overwrite (used by merge/copy-back style algorithms)
-                if event.type == "overwrite" and "index" in event.data and "value" in event.data:
-                    idx = event.data["index"]
-                    val = event.data["value"]
-                    if 0 <= idx < len(current_array):
-                        current_array[idx] = val
-
-                # Swap (used by many in-place sorts)
-                elif event.type == "swap" and "i" in event.data and "j" in event.data:
-                    idx_i = event.data["i"]
-                    idx_j = event.data["j"]
-                    if 0 <= idx_i < len(current_array) and 0 <= idx_j < len(current_array):
-                        current_array[idx_i], current_array[idx_j] = current_array[idx_j], current_array[idx_i]
-
-                # (Optional) handle other array-modifying event types if your algorithms add them
-
-            if current_graph is not None:
-                if event.type == "set_distance" and "u" in event.data and "new_distance" in event.data:
-                    node = event.data["u"]
-                    if "distances" not in snapshot_data:
-                        snapshot_data["distances"] = {}
-                    snapshot_data["distances"][node] = event.data["new_distance"]
-                elif event.type == "add_mst_edge" and "u" in event.data and "v" in event.data:
-                    if "mst_edges" not in snapshot_data:
-                        snapshot_data["mst_edges"] = []
-                    snapshot_data["mst_edges"].append((event.data["u"], event.data["v"]))
-                # (Optional) add other graph updates here
-
-        if current_array is not None:
-            snapshot_data["array"] = current_array
-        if current_graph is not None:
-            snapshot_data["graph"] = current_graph
-
-        # Provide context for renderers
-        snapshot_data["current_event_type"] = self.current_event.type
-        snapshot_data["current_event_details"] = self.current_event.details
-        snapshot_data["current_event_data"] = self.current_event.data
+        # Provide context for the renderer (e.g., for the title).
+        snapshot_data["current_event_type"] = event.type
+        snapshot_data["current_event_details"] = event.details
 
         return snapshot_data
-
 
     def get_trace_json(self) -> str:
         """Returns the full trace as a JSON string."""
@@ -168,69 +111,85 @@ class VisualizationEngine:
             VisualizationEngine: An initialized engine instance.
         """
         data = json.loads(json_trace)
-        events = [Event(step=d["step"], type=d["type"], details=d["details"], data={k: v for k, v in d.items() if k not in ["step", "type", "details"]}) for d in data]
+        # Reconstruct the 'data' field correctly from the JSON
+        events = [
+            Event(
+                step=d["step"],
+                type=d["type"],
+                details=d["details"],
+                data={k: v for k, v in d.items() if k not in ["step", "type", "details"]}
+            ) for d in data
+        ]
         return cls(events)
 
 
 if __name__ == '__main__':
-    # Example usage with a dummy trace
+    # Example usage with a dummy trace containing rich visual data
     dummy_trace = [
-        Event(step=0, type="snapshot", details="Initial array", data={"array_snapshot": [5, 2, 8, 1]}),
-        Event(step=1, type="compare", details="Compare 5 and 2", data={"i": 0, "j": 1}),
-        Event(step=2, type="swap", details="Swap 5 and 2", data={"i": 0, "j": 1}),
-        Event(step=3, type="snapshot", details="Array after swap", data={"array_snapshot": [2, 5, 8, 1]}),
-        Event(step=4, type="compare", details="Compare 8 and 1", data={"i": 2, "j": 3}),
-        Event(step=5, type="swap", details="Swap 8 and 1", data={"i": 2, "j": 3}),
-        Event(step=6, type="done", details="Algorithm finished", data={"sorted_array": [1, 2, 5, 8]}),
+        Event(
+            step=0, type="start", details="Initial state",
+            data={
+                "graph_snapshot": {"A": [("B", 1)], "B": [("A", 1)]},
+                "node_colors": {"A": "#ff9933", "B": "#66b3ff"},
+                "edge_colors": {("A", "B"): "#b3b3b3"},
+                "edge_widths": {("A", "B"): 1.5},
+                "node_labels": {"A": "A\n(0)", "B": "B\n(inf)"}
+            }
+        ),
+        Event(
+            step=1, type="visit", details="Visiting B",
+            data={
+                "graph_snapshot": {"A": [("B", 1)], "B": [("A", 1)]},
+                "node_colors": {"A": "#cccccc", "B": "#ff9933"},
+                "edge_colors": {("A", "B"): "#333333"},
+                "edge_widths": {("A", "B"): 3.0},
+                "node_labels": {"A": "A\n(0)", "B": "B\n(1)"}
+            }
+        ),
+        Event(step=2, type="done", details="Finished", data={})
     ]
 
     engine = VisualizationEngine(dummy_trace)
 
     print(f"Total steps: {engine.step_count}")
-    print(f"Current step (initial): {engine.current_step}")
-    print(f"Current event (initial): {engine.current_event.to_json_serializable()}")
-    print(f"Snapshot (initial): {engine.get_snapshot()}")
 
+    # --- Test Initial State ---
+    print("\n--- Initial State ---")
+    print(f"Current step: {engine.current_step}")
+    snapshot_initial = engine.get_snapshot()
+    print(f"Snapshot details: {snapshot_initial.get('current_event_details')}")
+    assert snapshot_initial['node_colors']['A'] == "#ff9933"
+    assert "graph_snapshot" in snapshot_initial
+    print("Initial snapshot test passed.")
+
+    # --- Test Next State ---
     engine.next()
-    print(f"\nCurrent step (next): {engine.current_step}")
-    print(f"Current event (next): {engine.current_event.to_json_serializable()}")
-    print(f"Snapshot (next): {engine.get_snapshot()}")
+    print("\n--- Next State ---")
+    print(f"Current step: {engine.current_step}")
+    snapshot_next = engine.get_snapshot()
+    print(f"Snapshot details: {snapshot_next.get('current_event_details')}")
+    assert snapshot_next['node_colors']['B'] == "#ff9933"
+    assert snapshot_next['edge_widths'][('A', 'B')] == 3.0
+    print("Next snapshot test passed.")
 
-    engine.seek(5)
-    print(f"\nCurrent step (seek to 5): {engine.current_step}")
-    print(f"Current event (seek to 5): {engine.current_event.to_json_serializable()}")
-    print(f"Snapshot (seek to 5): {engine.get_snapshot()}")
+    # --- Test Seek ---
+    engine.seek(0)
+    print("\n--- Seek to 0 ---")
+    print(f"Current step: {engine.current_step}")
+    snapshot_seek = engine.get_snapshot()
+    assert snapshot_seek['node_colors']['A'] == "#ff9933"
+    print("Seek test passed.")
 
-    engine.prev()
-    print(f"\nCurrent step (prev): {engine.current_step}")
-    print(f"Current event (prev): {engine.current_event.to_json_serializable()}")
-    print(f"Snapshot (prev): {engine.get_snapshot()}")
-
-    # Test JSON serialization/deserialization
+    # --- Test JSON Serialization/Deserialization ---
     json_output = engine.get_trace_json()
-    print(f"\nJSON Trace:\n{json_output}")
-
+    print(f"\n--- JSON Trace ---\n{json_output}")
     new_engine = VisualizationEngine.from_json_trace(json_output)
-    print(f"\nNew engine current step: {new_engine.current_step}")
-    print(f"New engine current event: {new_engine.current_event.to_json_serializable()}")
-    assert new_engine.step_count == engine.step_count
-    print("JSON (de)serialization test passed.")
+    new_engine.seek(1)
+    snapshot_from_json = new_engine.get_snapshot()
 
-    # Test graph snapshot logic
-    graph_trace = [
-        Event(step=0, type="snapshot", details="Initial graph", data={"graph_snapshot": {"A": [("B", 1)], "B": [("A", 1)]}}),
-        Event(step=1, type="set_distance", details="Set distance A to 0", data={"u": "A", "new_distance": 0}),
-        Event(step=2, type="add_mst_edge", details="Add edge A-B", data={"u": "A", "v": "B", "weight": 1}),
-        Event(step=3, type="done", details="Graph algo finished", data={}),
-    ]
-    graph_engine = VisualizationEngine(graph_trace)
-    graph_engine.seek(2)
-    graph_snapshot = graph_engine.get_snapshot()
-    print(f"\nGraph snapshot at step 2: {graph_snapshot}")
-    assert "graph" in graph_snapshot
-    assert "distances" in graph_snapshot
-    assert graph_snapshot["distances"]["A"] == 0
-    assert "mst_edges" in graph_snapshot
-    assert ("A", "B") in graph_snapshot["mst_edges"]
-    print("Graph snapshot test passed.")
+    print("\n--- State from Deserialized JSON ---")
+    print(f"Snapshot details: {snapshot_from_json.get('current_event_details')}")
+    assert snapshot_from_json['node_colors']['B'] == "#ff9933"
+    assert snapshot_from_json['edge_widths'][('A', 'B')] == 3.0
+    print("JSON (de)serialization test passed.")
 

@@ -1,83 +1,103 @@
-from typing import List, Generator, Any
+from typing import List, Generator, Any, Dict, Optional
 from app.utils.types import Event, Array
 
+# --- Visualization Constants ---
+DEFAULT_COLOR = "skyblue"
+VISITED_COLOR = "#ff9933"  # Orange for the element being visited/compared
+FOUND_COLOR = "#66cc66"    # Green for the found element
+
+def _create_visual_state(
+    arr: Array,
+    visited_index: Optional[int] = None,
+    found_index: Optional[int] = None,
+) -> Dict[str, Any]:
+    """Creates a rich visual state for the array at each step of Linear Search."""
+    bar_colors = [DEFAULT_COLOR] * len(arr)
+
+    if visited_index is not None:
+        bar_colors[visited_index] = VISITED_COLOR
+
+    if found_index is not None:
+        bar_colors[found_index] = FOUND_COLOR
+
+    return {"array": list(arr), "bar_colors": bar_colors}
+
 def linear_search_generator(arr: Array, target: Any) -> Generator[Event, None, None]:
-    """Generates events for visualizing the Linear Search algorithm.
-
-    Args:
-        arr (Array): The list of elements to search through.
-        target (Any): The element to search for.
-
-    Yields:
-        Event: An event object representing a step in the algorithm.
-    """
+    """Generates events for visualizing the Linear Search algorithm with rich visual metadata."""
     step_count = 0
     n = len(arr)
-    found = False
+    found_at_index = -1
 
     yield Event(
-        step=step_count,
-        type="snapshot",
-        details=f"Initial array state, searching for {target}",
-        data={"array_snapshot": list(arr), "target": target}
+        step=step_count, type="start", details=f"Starting search for {target}",
+        data=_create_visual_state(arr)
     )
     step_count += 1
 
     for i in range(n):
         yield Event(
-            step=step_count,
-            type="visit",
-            details=f"Visiting index {i}, comparing {arr[i]} with target {target}",
-            data={"index": i, "value": arr[i], "target": target, "array_snapshot": list(arr)}
+            step=step_count, type="visit", details=f"Checking index {i} (value: {arr[i]})",
+            data=_create_visual_state(arr, visited_index=i)
         )
         step_count += 1
 
         if arr[i] == target:
+            found_at_index = i
             yield Event(
-                step=step_count,
-                type="found",
-                details=f"Target {target} found at index {i}",
-                data={"index": i, "value": arr[i], "target": target, "array_snapshot": list(arr)}
+                step=step_count, type="found", details=f"Target {target} found at index {i}",
+                data=_create_visual_state(arr, found_index=i)
             )
             step_count += 1
-            found = True
             break
 
-    if not found:
+    if found_at_index == -1:
         yield Event(
-            step=step_count,
-            type="not_found",
-            details=f"Target {target} not found in the array",
-            data={"target": target, "array_snapshot": list(arr)}
+            step=step_count, type="not_found", details=f"Target {target} not found",
+            data=_create_visual_state(arr) # Final state, no highlights
         )
         step_count += 1
 
     yield Event(
-        step=step_count,
-        type="done",
-        details="Linear Search completed",
-        data={"found": found, "target": target, "final_array": list(arr)}
+        step=step_count, type="done", details="Search completed",
+        data=_create_visual_state(arr, found_index=found_at_index if found_at_index != -1 else None)
     )
-
 
 if __name__ == '__main__':
     test_array = [38, 27, 43, 3, 9, 82, 10]
     target_found = 9
     target_not_found = 100
 
+    # --- Test Case 1: Target Found ---
     print(f"Searching for {target_found} in {test_array}")
     events_found = list(linear_search_generator(test_array, target_found))
-    for event in events_found:
-        print(event.to_json_serializable())
+
+    print(f"\n--- Generated {len(events_found)} events (found case) ---")
+    for i, event in enumerate(events_found):
+        print(f"Step {i}: {event.type} - {event.details}")
+        assert "bar_colors" in event.data and "array" in event.data
+
     final_event_found = events_found[-1]
-    assert final_event_found.data["found"] is True
+    found_event = events_found[-2]
+
+    assert found_event.type == "found"
+    assert final_event_found.type == "done"
+    assert final_event_found.data["bar_colors"][test_array.index(target_found)] == FOUND_COLOR
     print("Found test passed.")
 
+    # --- Test Case 2: Target Not Found ---
     print(f"\nSearching for {target_not_found} in {test_array}")
     events_not_found = list(linear_search_generator(test_array, target_not_found))
-    for event in events_not_found:
-        print(event.to_json_serializable())
+
+    print(f"\n--- Generated {len(events_not_found)} events (not found case) ---")
+    for i, event in enumerate(events_not_found):
+        print(f"Step {i}: {event.type} - {event.details}")
+        assert "bar_colors" in event.data and "array" in event.data
+
     final_event_not_found = events_not_found[-1]
-    assert final_event_not_found.data["found"] is False
+    not_found_event = events_not_found[-2]
+
+    assert not_found_event.type == "not_found"
+    assert final_event_not_found.type == "done"
+    assert all(c == DEFAULT_COLOR for c in final_event_not_found.data["bar_colors"])
     print("Not found test passed.")
 
