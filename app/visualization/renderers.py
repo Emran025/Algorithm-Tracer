@@ -118,8 +118,9 @@ def render_graph(snapshot: Dict[str, Any], title: str = "Graph Visualization") -
         edgecolors="black", linewidths=1.0, ax=ax
     )
     nx.draw_networkx_edges(
-        G, pos, edge_color=final_edge_colors, width=final_edge_widths,
-        arrows=is_directed, arrowstyle='-|>', arrowsize=20, ax=ax
+        G, pos, edge_color=final_edge_colors, width=final_edge_widths
+        # ,
+        # arrows=is_directed, arrowstyle='-|>', arrowsize=20, ax=ax
     )
 
     # Draw node labels (potentially multi-line)
