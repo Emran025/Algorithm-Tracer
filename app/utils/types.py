@@ -31,6 +31,20 @@ class Event:
             **self.data,
         }
 
+    @classmethod
+    def from_json_list(cls, json_string: str) -> List['Event']:
+        """Deserializes a JSON string into a list of Event objects."""
+        import json
+        events_data = json.loads(json_string)
+        return [
+            cls(
+                step=d.get("step", -1),
+                type=d.get("type", "unknown"),
+                details=d.get("details", ""),
+                data={k: v for k, v in d.items() if k not in ["step", "type", "details"]}
+            ) for d in events_data
+        ]
+
 # Define common types for clarity
 Array = List[Union[int, float]]
 Graph = Dict[Any, List[Any]] # Adjacency list representation
