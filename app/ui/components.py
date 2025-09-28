@@ -18,16 +18,16 @@ def playback_controls(on_play: Callable, on_pause: Callable, on_step_forward: Ca
         speed (float): Current playback speed.
     """
     col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 2])
-
+ 
     with col1:
-        if st.button("⏮️ Back"): on_step_back()
+        if st.button(" ⏮ Back"): on_step_back()
     with col2:
         if is_playing:
-            if st.button("⏸️ Pause"): on_pause()
+            if st.button("⏸ Pause"): on_pause()
         else:
-            if st.button("▶️ Play"): on_play()
+            if st.button("◀ Play"): on_play()
     with col3:
-        if st.button("⏭️ Forward"): on_step_forward()
+        if st.button("Forward ⏭ "): on_step_forward()
     with col4:
         st.selectbox(
             "Speed",
@@ -73,13 +73,15 @@ def data_input_form(algorithm_type: str , algorithm_name : str) -> Dict[str, Any
             except ValueError:
                 st.error("Invalid array input. Please enter comma-separated integers.")
                 data["array"] = []
-            
-            target_value = st.text_input("Enter Target Value for Linear Search:", key="linear_search_target")
-            if target_value and algorithm_name != "Quick Sort" and algorithm_name != "Merge Sort":
-                try:
-                    data["target"] = int(target_value)
-                except ValueError:
-                    st.error("Invalid target value. Please enter an integer.")
+            if algorithm_name != "Quick Sort" and algorithm_name != "Merge Sort":
+                target_value = st.text_input("Enter Target Value for Linear Search:", key="linear_search_target")
+                if target_value :
+                    try:
+                        data["target"] = int(target_value)
+                    except ValueError:
+                        st.error("Invalid target value. Please enter an integer.")
+                else:
+                    data["target"] = None
             else:
                 data["target"] = None
         else: # Generate Random
@@ -197,21 +199,17 @@ def data_input_form(algorithm_type: str , algorithm_name : str) -> Dict[str, Any
     return data
 
 def trace_io_buttons(on_load: Callable, on_save: Callable):
-    """Renders buttons for loading and saving algorithm traces.
+    """Renders buttons for loading and saving algorithm traces."""
 
-    Args:
-        on_load (Callable): Callback function for loading a trace.
-        on_save (Callable): Callback function for saving the current trace.
-    """
     st.subheader("Trace Management")
-    col1, col2 = st.columns(2)
-    with col1:
-        uploaded_file = st.file_uploader("Load Trace (JSON)", type=["json"], key="trace_uploader")
-        if uploaded_file is not None:
-            on_load(uploaded_file.getvalue().decode("utf-8"))
-    with col2:
-        if st.button("Save Current Trace", key="save_trace_button"):
-            on_save()
+
+    uploaded_file = st.file_uploader("Load Trace (JSON)", type=["json"], key="trace_uploader")
+    if uploaded_file is not None:
+        on_load(uploaded_file.getvalue().decode("utf-8"))
+
+    if st.button("Save Current Trace", key="save_trace_button"):
+        on_save()
+
 
 
 def algorithm_analysis_panel(algorithm_name: str):
