@@ -128,7 +128,7 @@ with st.sidebar:
     st.session_state.algorithm_name = selected_algo
 
     algo_type = algorithms[st.session_state.algorithm_name]["type"]
-    input_data = data_input_form(algo_type)
+    input_data = data_input_form(algo_type , st.session_state.algorithm_name)
 
     if st.button("Run Algorithm", type="primary"):
         generate_trace(st.session_state.algorithm_name, input_data)

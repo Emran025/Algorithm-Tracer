@@ -51,7 +51,7 @@ def playback_controls(on_play: Callable, on_pause: Callable, on_step_forward: Ca
             on_change=lambda: on_seek(st.session_state.step_slider)
         )
 
-def data_input_form(algorithm_type: str) -> Dict[str, Any]:
+def data_input_form(algorithm_type: str , algorithm_name : str) -> Dict[str, Any]:
     """Renders input forms for algorithm data based on type.
 
     Args:
@@ -75,7 +75,7 @@ def data_input_form(algorithm_type: str) -> Dict[str, Any]:
                 data["array"] = []
             
             target_value = st.text_input("Enter Target Value for Linear Search:", key="linear_search_target")
-            if target_value:
+            if target_value and algorithm_name != "Quick Sort" and algorithm_name != "Merge Sort":
                 try:
                     data["target"] = int(target_value)
                 except ValueError:
