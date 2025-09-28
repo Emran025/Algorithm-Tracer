@@ -206,4 +206,3 @@ if __name__ == '__main__':
 
     assert actual_disconnected_set == expected_disconnected_set
     print("Disconnected graph test passed.")
-

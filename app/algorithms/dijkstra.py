@@ -220,4 +220,3 @@ if __name__ == '__main__':
     events_negative = list(dijkstra_generator(negative_weight_graph, 'A'))
     assert any(e.type == "error" for e in events_negative)
     print("Negative weight test passed.")
-
