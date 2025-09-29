@@ -40,10 +40,7 @@ def _create_visual_state(
         low, high = sorted_range
         for i in range(low, high + 1): bar_colors[i] = SORTED_COLOR
 
-    state = {"array": list(arr), "bar_colors": bar_colors}
-    if compare_indices:
-        state["compare_indices"] = compare_indices
-    return state
+    return {"array": list(arr), "bar_colors": bar_colors}
 
 def merge_sort_generator(arr: Array) -> Generator[Event, None, None]:
     """Generates events for visualizing the Merge Sort algorithm with rich visual metadata."""
@@ -87,8 +84,6 @@ def merge_sort_generator(arr: Array) -> Generator[Event, None, None]:
 
         left_copy = sub_arr[left : mid + 1]
         right_copy = sub_arr[mid + 1 : right + 1]
-        # Snapshot for consistent visualization during comparisons
-        arr_before_merge = list(sub_arr)
 
         i = 0  # Pointer for left_copy
         j = 0  # Pointer for right_copy
@@ -99,8 +94,7 @@ def merge_sort_generator(arr: Array) -> Generator[Event, None, None]:
                 step=step_count, type="compare",
                 details=f"Comparing {left_copy[i]} and {right_copy[j]}",
                 data=_create_visual_state(
-                    arr_before_merge,  # Use the snapshot for the comparison view
-                    left_partition=(left, mid), right_partition=(mid + 1, right),
+                    sub_arr, left_partition=(left, mid), right_partition=(mid + 1, right),
                     compare_indices=(left + i, mid + 1 + j)
                 )
             )
@@ -157,9 +151,11 @@ def merge_sort_generator(arr: Array) -> Generator[Event, None, None]:
 
     yield from _merge_sort(current_arr, 0, n - 1)
 
+    final_data = _create_visual_state(current_arr, sorted_range=(0, n - 1))
+    final_data["array"] = current_arr
     yield Event(
         step=step_count, type="done", details="Merge Sort completed",
-        data=_create_visual_state(current_arr, sorted_range=(0, n - 1))
+        data=final_data
     )
 
 if __name__ == '__main__':

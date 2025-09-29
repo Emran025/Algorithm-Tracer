@@ -174,11 +174,13 @@ def dijkstra_generator(graph: Graph, start_node: Any) -> Generator[Event, None, 
                     )
                     step_count += 1
 
+    final_data = _create_visual_state(graph, distances, visited, path, is_final_state=True)
+    final_data["distances"] = distances
     yield Event(
         step=step_count,
         type="done",
         details="Dijkstra's algorithm completed",
-        data=_create_visual_state(graph, distances, visited, path, is_final_state=True)
+        data=final_data
     )
 
 if __name__ == '__main__':

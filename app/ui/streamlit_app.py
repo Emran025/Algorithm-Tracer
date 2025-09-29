@@ -187,6 +187,32 @@ with col_details:
         if current_event.data:
             with st.expander("Raw Event Data"):
                 st.json(current_event.to_json_serializable())
+
+        # Display final output on the last step
+        is_final_step = st.session_state.current_step_index == st.session_state.engine.step_count - 1
+        if is_final_step and current_event.type == "done":
+            st.header("Final Output")
+            final_data = current_event.data
+            algo_type = algorithms[st.session_state.algorithm_name]["type"]
+            algo_name = st.session_state.algorithm_name
+
+            if algo_type == "array":
+                if "array" in final_data:
+                    st.success(f"Final Array: `{final_data['array']}`")
+                if algo_name == "Linear Search":
+                    if "found" in final_data and final_data["found"]:
+                        st.success(f"Target found at index: `{final_data.get('found_index', 'N/A')}`")
+                    elif "found" in final_data:
+                        st.info("Target not found in the array.")
+
+            elif algo_type == "graph":
+                if algo_name == "Kruskal (MST)" and "mst_edges" in final_data:
+                    st.success("Minimum Spanning Tree (MST):")
+                    st.code(json.dumps(final_data['mst_edges'], indent=2), language="json")
+                elif algo_name == "Dijkstra (SSSP)" and "distances" in final_data:
+                    st.success("Shortest Path Distances:")
+                    distances_str = {str(k): (v if v != float('inf') else 'Infinity') for k, v in final_data['distances'].items()}
+                    st.code(json.dumps(distances_str, indent=2), language="json")
     else:
         st.info("Event details will appear here.")
 

@@ -89,7 +89,7 @@ def kruskal_generator(graph: Graph) -> Generator[Event, None, None]:
     step_count = 0
     nodes = list(graph.keys())
     if not nodes:
-        yield Event(step=0, type="done", details="Graph is empty.", data={})
+        yield Event(step=0, type="done", details="Graph is empty.", data={"mst_edges": [], "graph_snapshot": graph, "node_colors": {}, "edge_colors": {}, "edge_widths": {}, "node_labels": {}})
         return
 
     edges = []
@@ -144,11 +144,13 @@ def kruskal_generator(graph: Graph) -> Generator[Event, None, None]:
             step_count += 1
 
     # Final state
+    final_data = _create_visual_state(graph, uf, mst_edges)
+    final_data["mst_edges"] = mst_edges
     yield Event(
         step=step_count,
         type="done",
         details="Kruskal's algorithm completed.",
-        data=_create_visual_state(graph, uf, mst_edges)
+        data=final_data
     )
 
 if __name__ == '__main__':
