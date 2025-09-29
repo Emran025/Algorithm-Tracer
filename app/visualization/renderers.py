@@ -173,7 +173,7 @@ if __name__ == '__main__':
             ('A', 'B'): '#2ca02c', ('C', 'D'): '#2ca02c', ('B', 'E'): '#e6e6e6',
             ('D', 'E'): '#e6e6e6'
         },
-        "edge_widths": { t: 3.0 if c == '#2ca02c' else 1.0 for t, c in rich_graph_snapshot["edge_colors"].items() },
+        "edge_widths": { t: 3.0 if c == '#2ca02c' else 1.0 for t, c in rich_graph_snapshot["edge_colors"].items() }, # type: ignore
         "node_labels": {
             'A': 'A\n(0)', 'B': 'B\n(4)', 'C': 'C\n(2)',
             'D': 'D\n(4)', 'E': 'E\n(7)', 'F': 'F\n(6)'

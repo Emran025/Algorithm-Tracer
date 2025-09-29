@@ -69,6 +69,8 @@ Follow these instructions to get a local copy of the project up and running.
 Once the setup is complete, you can launch the Streamlit application with a single command:
 
 ```sh
+C:/Users/Thinkpad/anaconda3/Scripts/activate
+conda activate base
 set PYTHONPATH=%PYTHONPATH%;C:\Applications_Projacts\pyProjacts\project_03
 streamlit run app/ui/streamlit_app.py
 ```

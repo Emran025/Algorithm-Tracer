@@ -3,7 +3,7 @@ import streamlit as st
 from typing import Callable, List, Any, Dict
 import re
 
-def playback_controls(on_play: Callable, on_pause: Callable, on_step_forward: Callable, on_step_back: Callable, on_seek: Callable, current_step_index: int, total_steps: int, is_playing: bool, speed: float):
+def playback_controls(on_play: Callable,on_back_to_start: Callable, on_pause: Callable, on_step_forward: Callable, on_step_back: Callable, on_seek: Callable, current_step_index: int, total_steps: int, is_playing: bool, speed: float):
     """Renders playback controls for the visualization.
 
     Args:
@@ -18,14 +18,16 @@ def playback_controls(on_play: Callable, on_pause: Callable, on_step_forward: Ca
         speed (float): Current playback speed.
     """
     col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 2])
- 
+
     with col1:
         if st.button(" ⏮ Back "): on_step_back()
     with col2:
-        if is_playing:
+        if is_playing and total_steps - 1 > current_step_index:
             if st.button(" ⏸ Pause "): on_pause()
         else:
-            if st.button(" ◀ Play "): on_play()
+            if st.button(" ◀ Play "): 
+                if total_steps - 1 == current_step_index: on_back_to_start()
+                on_play()
     with col3:
         if st.button(" Forward ⏭ "): on_step_forward()
     with col4:

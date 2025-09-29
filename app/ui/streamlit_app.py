@@ -109,6 +109,10 @@ def step_back():
     if st.session_state.engine and st.session_state.current_step_index > 0:
         st.session_state.current_step_index -= 1
 
+def back_to_start():
+    if st.session_state.total_steps - 1 > st.session_state.current_step_index :
+        st.session_state.current_step_index = 1
+
 def seek_to_step(step_index: int):
     if st.session_state.engine and 0 <= step_index < st.session_state.engine.step_count:
         st.session_state.current_step_index = step_index
@@ -157,7 +161,8 @@ with col_viz:
 
         # Playback controls
         playback_controls(
-            on_play=lambda: st.session_state.update(is_playing=True),
+            on_play=lambda: st.session_state.update(is_playing = True),
+            on_back_to_start=lambda: st.session_state.update(current_step_index = 0),
             on_pause=lambda: st.session_state.update(is_playing=False),
             on_step_forward=step_forward,
             on_step_back=step_back,
@@ -175,9 +180,34 @@ with col_viz:
             st.rerun()
         elif st.session_state.is_playing and st.session_state.current_step_index == st.session_state.engine.step_count - 1:
             st.session_state.is_playing = False # Stop playing at the end
-
+        # Display final output on the last step
+        is_final_step = st.session_state.current_step_index == st.session_state.engine.step_count - 1
     else:
         st.info("Select an algorithm and input data, then click 'Run Algorithm' to start visualization.")
+    current_event = st.session_state.engine.current_event
+    if is_final_step and current_event.type == "done":
+        st.header("Final Output")
+        final_data = current_event.data
+        algo_type = algorithms[st.session_state.algorithm_name]["type"]
+        algo_name = st.session_state.algorithm_name
+
+        if algo_type == "array":
+            if "array" in final_data:
+                st.success(f"Final Array: `{final_data['array']}`")
+            if algo_name == "Linear Search":
+                if "found" in final_data and final_data["found"]:
+                    st.success(f"Target found at index: `{final_data.get('found_index', 'N/A')}`")
+                elif "found" in final_data:
+                    st.info("Target not found in the array.")
+
+        elif algo_type == "graph":
+            if algo_name == "Kruskal (MST)" and "mst_edges" in final_data:
+                st.success("Minimum Spanning Tree (MST):")
+                st.code(json.dumps(final_data['mst_edges'], indent=2), language="json")
+            elif algo_name == "Dijkstra (SSSP)" and "distances" in final_data:
+                st.success("Shortest Path Distances:")
+                distances_str = {str(k): (v if v != float('inf') else 'Infinity') for k, v in final_data['distances'].items()}
+                st.code(json.dumps(distances_str, indent=2), language="json")
 
 with col_details:
     st.header("Event Details")
@@ -188,31 +218,6 @@ with col_details:
             with st.expander("Raw Event Data"):
                 st.json(current_event.to_json_serializable())
 
-        # Display final output on the last step
-        is_final_step = st.session_state.current_step_index == st.session_state.engine.step_count - 1
-        if is_final_step and current_event.type == "done":
-            st.header("Final Output")
-            final_data = current_event.data
-            algo_type = algorithms[st.session_state.algorithm_name]["type"]
-            algo_name = st.session_state.algorithm_name
-
-            if algo_type == "array":
-                if "array" in final_data:
-                    st.success(f"Final Array: `{final_data['array']}`")
-                if algo_name == "Linear Search":
-                    if "found" in final_data and final_data["found"]:
-                        st.success(f"Target found at index: `{final_data.get('found_index', 'N/A')}`")
-                    elif "found" in final_data:
-                        st.info("Target not found in the array.")
-
-            elif algo_type == "graph":
-                if algo_name == "Kruskal (MST)" and "mst_edges" in final_data:
-                    st.success("Minimum Spanning Tree (MST):")
-                    st.code(json.dumps(final_data['mst_edges'], indent=2), language="json")
-                elif algo_name == "Dijkstra (SSSP)" and "distances" in final_data:
-                    st.success("Shortest Path Distances:")
-                    distances_str = {str(k): (v if v != float('inf') else 'Infinity') for k, v in final_data['distances'].items()}
-                    st.code(json.dumps(distances_str, indent=2), language="json")
     else:
         st.info("Event details will appear here.")
 
