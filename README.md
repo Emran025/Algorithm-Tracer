@@ -7,11 +7,11 @@ AlgoVisEdu is an educational tool built with Python and Streamlit to help users 
 
 
 <div style="display: flex; justify-content: space-between; margin-bottom: 25px">
-<img src="screenshots\screenshot_00.png" alt = "screenshot_00" style="width:18%">
-<img src="screenshots\screenshot_01.png" alt = "screenshot_01" style="width:18%">
-<img src="screenshots\screenshot_02.png" alt = "screenshot_02" style="width:18%">
-<img src="screenshots\screenshot_03.png" alt = "screenshot_03" style="width : 18%">
-<img src="screenshots\screenshot_04.png" alt = "screenshot_04" style="width : 18%">
+<img src="screenshots/screenshot_00.png" alt = "screenshot_00" style="width:18%">
+<img src="screenshots/screenshot_01.png" alt = "screenshot_01" style="width:18%">
+<img src="screenshots/screenshot_02.png" alt = "screenshot_02" style="width:18%">
+<img src="screenshots/screenshot_03.png" alt = "screenshot_03" style="width : 18%">
+<img src="screenshots/screenshot_04.png" alt = "screenshot_04" style="width : 18%">
 </div>
 
 
