@@ -5,11 +5,11 @@ AlgoVisEdu is an educational tool built with Python and Streamlit to help users 
 <!-- Add a screenshot of the application here -->
 
 <div style="display: flex; justify-content: space-between; margin-bottom: 25px">
-<img src="screenshots/screenshot_00.png" alt = "screenshot_00" style="width:18%">
-<img src="screenshots/screenshot_01.png" alt = "screenshot_01" style="width:18%">
-<img src="screenshots/screenshot_02.png" alt = "screenshot_02" style="width:18%">
-<img src="screenshots/screenshot_03.png" alt = "screenshot_03" style="width : 18%">
-<img src="screenshots/screenshot_04.png" alt = "screenshot_04" style="width : 18%">
+<img src="screenshots/Screenshot_00.png" alt = "screenshot_00" style="width:18%">
+<img src="screenshots/Screenshot_01.png" alt = "screenshot_01" style="width:18%">
+<img src="screenshots/Screenshot_02.png" alt = "screenshot_02" style="width:18%">
+<img src="screenshots/Screenshot_03.png" alt = "screenshot_03" style="width : 18%">
+<img src="screenshots/Screenshot_04.png" alt = "screenshot_04" style="width : 18%">
 </div>
 
 > Screenshot of an interactive algorithm visualization web app called AlgoVisEdu. The main interface displays a configuration panel on the left for selecting algorithms such as Merge Sort, Quick Sort, Linear Search, Kruskal MST, and Dijkstra SSSP, with options to input data manually or generate random data. The center area is reserved for dynamic visualizations, including bar charts for sorting and searching algorithms and a network graph for Dijkstra's algorithm, where nodes and edges are highlighted in green to show the shortest path. The right panel provides detailed algorithm analysis, including time and space complexity, explanatory notes, and event details. The environment is clean and modern, with a calm and educational tone. All visible text is transcribed, including section headers like Visualization, Event Details, Algorithm Analysis, and configuration options such as Select Algorithm, Run Algorithm, and Trace
