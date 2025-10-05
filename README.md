@@ -4,7 +4,16 @@ AlgoVisEdu is an educational tool built with Python and Streamlit to help users 
 
 <!-- Add a screenshot of the application here -->
 
-![AlgoVisEdu Screenshot](https://i.imgur.com/your-screenshot-url.png) <!-- Placeholder -->
+
+
+<div style="display: flex; justify-content: space-between; margin-bottom: 25px">
+<img src="screenshots\screenshot_00.png" alt = "screenshot_00" style="width:18%">
+<img src="screenshots\screenshot_01.png" alt = "screenshot_01" style="width:18%">
+<img src="screenshots\screenshot_02.png" alt = "screenshot_02" style="width:18%">
+<img src="screenshots\screenshot_03.png" alt = "screenshot_03" style="width : 18%">
+<img src="screenshots\screenshot_04.png" alt = "screenshot_04" style="width : 18%">
+</div>
+
 
 ## Features
 
@@ -55,13 +64,13 @@ Follow these instructions to get a local copy of the project up and running.
     source venv/bin/activate
 
     # For Windows
-    python -m venv venv
+    conda -m venv venv
     .\venv\Scripts\activate
     ```
 
 3.  **Install the required dependencies:**
     ```sh
-    pip install -r requirements.txt
+    conda install streamlit
     ```
 
 ### Running the Application

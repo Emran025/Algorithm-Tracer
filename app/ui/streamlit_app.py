@@ -1,9 +1,14 @@
+
+# ------------------
+# Main Streamlit application (streamlit_app)
+# ------------------
 import streamlit as st
 import time
 import json
 from typing import List, Dict, Any, Optional
 
 import matplotlib.pyplot as plt
+# Note: the following imports refer to your project modules. Keep as-is.
 from app.visualization.engine import VisualizationEngine
 from app.visualization.renderers import render_array_bars, render_graph
 from app.algorithms.merge_sort import merge_sort_generator
@@ -13,7 +18,7 @@ from app.algorithms.quick_sort import quick_sort_generator
 from app.algorithms.kruskal import kruskal_generator
 from app.algorithms.dijkstra import dijkstra_generator
 
-from app.ui.components import playback_controls, data_input_form, trace_io_buttons, algorithm_analysis_panel
+from app.ui.components import playback_controls, data_input_form, trace_io_buttons, algorithm_analysis_panel , algorithm_example_analysis_panel
 from app.utils.types import Event
 
 st.set_page_config(layout="wide", page_title="AlgoVisEdu")
@@ -22,6 +27,7 @@ st.set_page_config(layout="wide", page_title="AlgoVisEdu")
 if "algorithm_name" not in st.session_state: st.session_state.algorithm_name = "Merge Sort"
 if "trace" not in st.session_state: st.session_state.trace = []
 if "engine" not in st.session_state: st.session_state.engine = None
+if "is_puse_playing" not in st.session_state: st.session_state.is_puse_playing = True
 if "current_step_index" not in st.session_state: st.session_state.current_step_index = 0
 if "is_playing" not in st.session_state: st.session_state.is_playing = False
 if "playback_speed" not in st.session_state: st.session_state.playback_speed = 1.0
@@ -37,6 +43,15 @@ algorithms = {
     "Dijkstra (SSSP)": {"generator": dijkstra_generator, "type": "graph"},
 }
 
+def make_json_safe(obj):
+    """Recursively convert all dict keys to strings for JSON compatibility."""
+    if isinstance(obj, dict):
+        return {str(k): make_json_safe(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [make_json_safe(v) for v in obj]
+    else:
+        return obj
+
 # --- Callbacks ---
 def generate_trace(algo_name: str, input_data: Dict[str, Any]):
     """Generates a new trace for the selected algorithm and input data."""
@@ -44,18 +59,22 @@ def generate_trace(algo_name: str, input_data: Dict[str, Any]):
     generator_func = algorithms[algo_name]["generator"]
     try:
         if algorithms[algo_name]["type"] == "array":
-            if not input_data.get("array"): raise ValueError("Array input cannot be empty.")
+            if not input_data.get("array"):
+                raise ValueError("Array input cannot be empty.")
             if algo_name == "Linear Search":
                 target = input_data.get("target")
-                if target is None: raise ValueError("Target value is required for Linear Search.")
+                if target is None:
+                    raise ValueError("Target value is required for Linear Search.")
                 trace_events = list(generator_func(list(input_data["array"]), target))
             else:
                 trace_events = list(generator_func(list(input_data["array"])))
         elif algorithms[algo_name]["type"] == "graph":
-            if not input_data.get("graph"): raise ValueError("Graph input cannot be empty.")
+            if not input_data.get("graph"):
+                raise ValueError("Graph input cannot be empty.")
             if algo_name == "Dijkstra (SSSP)":
                 start_node = input_data.get("start_node")
-                if not start_node: raise ValueError("Start node is required for Dijkstra's algorithm.")
+                if not start_node:
+                    raise ValueError("Start node is required for Dijkstra's algorithm.")
                 trace_events = list(generator_func(input_data["graph"], start_node))
             else:
                 trace_events = list(generator_func(input_data["graph"]))
@@ -71,6 +90,7 @@ def generate_trace(algo_name: str, input_data: Dict[str, Any]):
         st.session_state.trace = []
         st.session_state.engine = None
         st.session_state.current_step_index = 0
+
 
 def load_trace_from_json(json_string: str):
     """Loads a trace from a JSON string."""
@@ -90,28 +110,40 @@ def load_trace_from_json(json_string: str):
 def save_current_trace():
     """Saves the current trace to a JSON file."""
     if st.session_state.engine:
-        trace_json = st.session_state.engine.get_trace_json()
+        raw_events = [event.to_json_serializable() for event in st.session_state.trace]
+
+        safe_events = [make_json_safe(ev) for ev in raw_events]
+
+        trace_json = json.dumps(safe_events, indent=2)
+
         st.download_button(
             label="Download Trace JSON",
             data=trace_json,
-            file_name=f"{st.session_state.algorithm_name.replace(" ", "_").lower()}_trace.json",
+            file_name=f"{st.session_state.algorithm_name.replace(' ', '_').lower()}_trace.json",
             mime="application/json",
-            key="download_trace_button"
+            key="download_trace_button",
+            type= "secondary"
         )
     else:
         st.warning("No trace to save. Generate or load a trace first.")
+
+
 
 def step_forward():
     if st.session_state.engine and st.session_state.current_step_index < st.session_state.engine.step_count - 1:
         st.session_state.current_step_index += 1
 
+
 def step_back():
     if st.session_state.engine and st.session_state.current_step_index > 0:
         st.session_state.current_step_index -= 1
 
+
 def back_to_start():
-    if st.session_state.total_steps - 1 > st.session_state.current_step_index :
-        st.session_state.current_step_index = 1
+    # Safely reset to the first step if engine exists
+    if st.session_state.engine and getattr(st.session_state.engine, 'step_count', 0) > 0:
+        st.session_state.current_step_index = 0
+
 
 def seek_to_step(step_index: int):
     if st.session_state.engine and 0 <= step_index < st.session_state.engine.step_count:
@@ -144,7 +176,10 @@ col_viz, col_details = st.columns([3, 1])
 
 with col_viz:
     st.header("Visualization")
+
     if st.session_state.engine:
+    
+    
         st.session_state.engine.seek(st.session_state.current_step_index)
         snapshot = st.session_state.engine.get_snapshot()
 
@@ -170,51 +205,64 @@ with col_viz:
             current_step_index=st.session_state.current_step_index,
             total_steps=st.session_state.engine.step_count,
             is_playing=st.session_state.is_playing,
-            speed=st.session_state.playback_speed
         )
+
 
         # Auto-play logic
         if st.session_state.is_playing and st.session_state.current_step_index < st.session_state.engine.step_count - 1:
-            time.sleep(0.3 / st.session_state.playback_speed)
+            st.session_state.is_puse_playing = True
+            base_delay = 0.4
+            time.sleep(base_delay / ( st.session_state.playback_speed))
+
             st.session_state.current_step_index += 1
             st.rerun()
+            
         elif st.session_state.is_playing and st.session_state.current_step_index == st.session_state.engine.step_count - 1:
             st.session_state.is_playing = False # Stop playing at the end
+
+        else:
+            if st.session_state.is_puse_playing:
+                st.session_state.is_puse_playing = False
+                st.rerun()
+        
+            
         # Display final output on the last step
         is_final_step = st.session_state.current_step_index == st.session_state.engine.step_count - 1
+
+        current_event = st.session_state.engine.current_event
+        if is_final_step and getattr(current_event, 'type', None) == "done":
+            st.header("Final Output")
+            final_data = current_event.data
+            algo_type = algorithms[st.session_state.algorithm_name]["type"]
+            algo_name = st.session_state.algorithm_name
+
+            if algo_type == "array":
+                if "array" in final_data:
+                    st.success(f"Final Array: `{final_data['array']}`")
+                if algo_name == "Linear Search":
+                    if "found" in final_data and final_data["found"]:
+                        st.success(f"Target found at index: `{final_data.get('found_index', 'N/A')}`")
+                    elif "found" in final_data:
+                        st.info("Target not found in the array.")
+
+            elif algo_type == "graph":
+                if algo_name == "Kruskal (MST)" and "mst_edges" in final_data:
+                    st.success("Minimum Spanning Tree (MST):")
+                    st.code(json.dumps(final_data['mst_edges'], indent=2), language="json")
+                elif algo_name == "Dijkstra (SSSP)" and "distances" in final_data:
+                    st.success("Shortest Path Distances:")
+                    distances_str = {str(k): (v if v != float('inf') else 'Infinity') for k, v in final_data['distances'].items()}
+                    st.code(json.dumps(distances_str, indent=2), language="json")
     else:
         st.info("Select an algorithm and input data, then click 'Run Algorithm' to start visualization.")
-    current_event = st.session_state.engine.current_event
-    if is_final_step and current_event.type == "done":
-        st.header("Final Output")
-        final_data = current_event.data
-        algo_type = algorithms[st.session_state.algorithm_name]["type"]
-        algo_name = st.session_state.algorithm_name
 
-        if algo_type == "array":
-            if "array" in final_data:
-                st.success(f"Final Array: `{final_data['array']}`")
-            if algo_name == "Linear Search":
-                if "found" in final_data and final_data["found"]:
-                    st.success(f"Target found at index: `{final_data.get('found_index', 'N/A')}`")
-                elif "found" in final_data:
-                    st.info("Target not found in the array.")
-
-        elif algo_type == "graph":
-            if algo_name == "Kruskal (MST)" and "mst_edges" in final_data:
-                st.success("Minimum Spanning Tree (MST):")
-                st.code(json.dumps(final_data['mst_edges'], indent=2), language="json")
-            elif algo_name == "Dijkstra (SSSP)" and "distances" in final_data:
-                st.success("Shortest Path Distances:")
-                distances_str = {str(k): (v if v != float('inf') else 'Infinity') for k, v in final_data['distances'].items()}
-                st.code(json.dumps(distances_str, indent=2), language="json")
 
 with col_details:
     st.header("Event Details")
     if st.session_state.engine:
         current_event = st.session_state.engine.current_event
         st.markdown(f"**Step {current_event.step}:** {current_event.details}")
-        if current_event.data:
+        if getattr(current_event, 'data', None):
             with st.expander("Raw Event Data"):
                 st.json(current_event.to_json_serializable())
 
@@ -224,7 +272,37 @@ with col_details:
     st.header("Algorithm Analysis")
     algorithm_analysis_panel(st.session_state.algorithm_name)
 
+    algo_name = st.session_state.algorithm_name
+    if st.session_state.engine:
+        algo_name = st.session_state.algorithm_name
+        algo_type = algorithms[algo_name]["type"]
+
+   
+        if algo_type == "array":
+            n = len(st.session_state.trace)
+            arr = []
+            target = 0
+            v = e = 0
+
+            if algo_name == "Linear Search":
+                arr = st.session_state.trace 
+                target = getattr(st.session_state, "search_target", 0)
+                n = len(arr)
+
+            algorithm_example_analysis_panel(algo_name, n, arr, target, v, e)
+
+        elif algo_type == "graph":
+            graph = st.session_state.generated_graph or {}
+
+            v = len(graph)                   # عدد العقد = عدد المفاتيح
+            e = sum(len(neigh) for neigh in graph.values())  # عدد الحواف = مجموع القوائم
+
+            n = 0
+            arr = []
+            target = 0
+
+            algorithm_example_analysis_panel(algo_name, n, arr, target, v, e)
+
 
 # Placeholder for matplotlib to avoid issues when not displaying a plot
-import matplotlib.pyplot as plt
 plt.close('all')
