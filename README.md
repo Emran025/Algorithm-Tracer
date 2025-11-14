@@ -1,232 +1,67 @@
-# AlgoVisEdu: Interactive Algorithm Visualization
+# Research Paper Classification
 
-AlgoVisEdu is an educational tool built with Python and Streamlit to help users visualize and understand how common algorithms work. It provides step-by-step, interactive animations for a variety of searching, sorting, and graph algorithms.
+This project is a comprehensive system for classifying research papers into various scientific disciplines. The pipeline includes web scraping from Mendeley, data cleaning and preprocessing, and a fine-tuned BERT model for classification.
 
-<!-- Add a screenshot of the application here -->
+## Uploaded Files
 
-<div style="display: flex; justify-content: space-between; margin-bottom: 25px">
-<img src="screenshots/Screenshot_00.png" alt = "screenshot_00" style="width:18%">
-<img src="screenshots/Screenshot_01.png" alt = "screenshot_01" style="width:18%">
-<img src="screenshots/Screenshot_02.png" alt = "screenshot_02" style="width:18%">
-<img src="screenshots/Screenshot_03.png" alt = "screenshot_03" style="width : 18%">
-<img src="screenshots/Screenshot_04.png" alt = "screenshot_04" style="width : 18%">
-</div>
+The following files are included in this repository:
 
-> Screenshot of an interactive algorithm visualization web app called AlgoVisEdu. The main interface displays a configuration panel on the left for selecting algorithms such as Merge Sort, Quick Sort, Linear Search, Kruskal MST, and Dijkstra SSSP, with options to input data manually or generate random data. The center area is reserved for dynamic visualizations, including bar charts for sorting and searching algorithms and a network graph for Dijkstra's algorithm, where nodes and edges are highlighted in green to show the shortest path. The right panel provides detailed algorithm analysis, including time and space complexity, explanatory notes, and event details. The environment is clean and modern, with a calm and educational tone. All visible text is transcribed, including section headers like Visualization, Event Details, Algorithm Analysis, and configuration options such as Select Algorithm, Run Algorithm, and Trace
+*   `gdrive_folder_downloader.ipynb`: A Jupyter notebook to download the dataset from Google Drive.
+*   `mendeley_scraper.ipynb`: A Jupyter notebook for scraping research paper data from Mendeley.
+*   `research_papers_bert_finetuning.ipynb`: A Jupyter notebook for fine-tuning the BERT model for text classification.
 
-## Features
+## Project Data and Models on Google Drive
 
-- **Interactive Visualizations**: Watch algorithms operate on data in real-time.
-- **Full Playback Control**: Play, pause, step forward, step backward, and seek to any point in the execution.
-- **Adjustable Speed**: Slow down the animation to catch every detail or speed it up to see the bigger picture.
-- **Detailed Explanations**: See a human-readable description of every single action the algorithm takes.
-- **Complexity Analysis**: View the time and space complexity for each algorithm, along with pedagogical notes.
-- **Save & Load Traces**: Save the entire step-by-step execution of an algorithm to a JSON file and load it back later for review or sharing.
-- **Flexible Data Input**: Manually enter your own data or generate random arrays and graphs to experiment with.
+The core datasets, trained model, and training artifacts are hosted on Google Drive.
 
-## 📚 Implemented Algorithms
+### Model & Training Artifacts
 
-The following algorithms are currently available for visualization:
+*   **Main Model Folder (`bert_text_classifier`):** [https://drive.google.com/drive/folders/1IqttC-7FPdlnA-5zWzbyNF5d3-uIntbr](https://drive.google.com/drive/folders/1IqttC-7FPdlnA-5zWzbyNF5d3-uIntbr)
+*   **Training Checkpoints (`bert_classification_output`):**
+    *   checkpoint-6988: [https://drive.google.com/drive/folders/1oAKMa9rNeLulQzhqvw3u35_lDp1Il2j4](https://drive.google.com/drive/folders/1oAKMa9rNeLulQzhqvw3u35_lDp1Il2j4)
+    *   checkpoint-13976: [https://drive.google.com/drive/folders/1S6bk9CSK7EXqaRzvRPA6cYowJFi8tE5S](https://drive.google.com/drive/folders/1S6bk9CSK7EXqaRzvRPA6cYowJFi8tE5S)
 
-- **Searching**:
-  - Linear Search
-- **Sorting**:
-  - Merge Sort
-  - Quick Sort
-- **Graph**:
-  - Kruskal's Algorithm (Minimum Spanning Tree)
-  - Dijkstra's Algorithm (Single-Source Shortest Path)
+### Datasets
 
-## Getting Started
+*   **Primary Cleaned Dataset (`cleaned_dataset.csv`):** [https://drive.google.com/file/d/1tv57_K5XjJ46Rlzj3mhRYf7_TElCovYh/view?usp=drivesdk](https://drive.google.com/file/d/1tv57_K5XjJ46Rlzj3mhRYf7_TElCovYh/view?usp=drivesdk)
+*   **Raw Scraped Data (`Mendeley_Research`):**
+    *   Computer Science: [https://drive.google.com/drive/folders/1xPFKizXlFf4GkQqOeQHjAkkHpQOAefkU](https://drive.google.com/drive/folders/1xPFKizXlFf4GkQqOeQHjAkkHpQOAefkU)
+    *   Medicine: [https://drive.google.com/drive/folders/1uuRWFhe3OSDbqBwYFRuzfB72oG8E9Vfv](https://drive.google.com/drive/folders/1uuRWFhe3OSDbqBwYFRuzfB72oG8E9Vfv)
+    *   Business: [https://drive.google.com/drive/folders/1dXWtIzKl5AOUsqBfSZC6BHRiIT8dYPX3](https://drive.google.com/drive/folders/1dXWtIzKl5AOUsqBfSZC6BHRiIT8dYPX3)
+    *   Chemistry: [https://drive.google.com/drive/folders/105je5xW-uXM4mGWEf2mBnml2AjzhAVZc](https://drive.google.com/drive/folders/105je5xW-uXM4mGWEf2mBnml2AjzhAVZc)
+    *   Mathematics: [https://drive.google.com/drive/folders/1UEBxx55Rc-LoVLMP-mBjBCBh3TsAzZKe](https://drive.google.com/drive/folders/1UEBxx55Rc-LoVLMP-mBjBCBh3TsAzZKe)
+    *   Psychology: [https://drive.google.com/drive/folders/1IZ1zTLb2cfBp136v-hNBwvq3qASM-e9d](https://drive.google.com/drive/folders/1IZ1zTLb2cfBp136v-hNBwvq3qASM-e9d)
+    *   Environmental Science: [https://drive.google.com/drive/folders/1IDv2CCm23I71pm8-D06YaRdCThpZX98C](https://drive.google.com/drive/folders/1IDv2CCm23I71pm8-D06YaRdCThpZX98C)
+    *   Biology: [https://drive.google.com/drive/folders/105je5xW-uXM4mGWEf2mBnml2AjzhAVZc](https://drive.google.com/drive/folders/105je5xW-uXM4mGWEf2mBnml2AjzhAVZc)
+    *   Physics: [https://drive.google.com/drive/folders/19mnlfDM81N3phXZhZn1wqfkApv3ft8HR](https://drive.google.com/drive/folders/19mnlfDM81N3phXZhZn1wqfkApv3ft8HR)
 
-Follow these instructions to get a local copy of the project up and running.
+## How to Use
 
-### Prerequisites
+1.  **Download the data:** Access the datasets from the Google Drive links provided above. The `gdrive_folder_downloader.ipynb` notebook can be used as a reference for programmatically downloading the data.
+2.  **Scrape new data (Optional):** Run the `mendeley_scraper.ipynb` notebook to scrape additional research paper data from Mendeley.
+3.  **Train the model:** Run the `research_papers_bert_finetuning.ipynb` notebook to fine-tune the BERT model on the provided dataset.
 
-- Python 3.8+
-- `pip` and `venv`
+## Model Performance
 
-### Installation & Setup
+The fine-tuned BERT model achieves the following performance:
 
-1.  **Clone the repository:**
+*   **Evaluation Loss:** 0.184
+*   **Accuracy:** 95.39%
 
-    ```sh
-    git clone https://github.com/your-username/AlgoVisEdu.git
-    cd AlgoVisEdu
-    ```
+### Classification Report
 
-2.  **Create and activate a virtual environment:**
+| Category              | Precision | Recall | F1-Score | Support |
+| --------------------- | --------- | ------ | -------- | ------- |
+| Biology               | 0.94      | 0.93   | 0.94     | 3177    |
+| Business              | 0.96      | 0.97   | 0.97     | 3179    |
+| Chemistry             | 0.94      | 0.96   | 0.95     | 3073    |
+| Computer Science      | 0.96      | 0.93   | 0.95     | 2987    |
+| Environmental Science | 0.95      | 0.94   | 0.95     | 2850    |
+| Mathematics           | 0.93      | 0.96   | 0.95     | 3091    |
+| Medicine              | 0.97      | 0.96   | 0.96     | 3067    |
+| Physics               | 0.97      | 0.95   | 0.96     | 3181    |
+| Psychology            | 0.97      | 0.97   | 0.97     | 3348    |
 
-    ```sh
-    # For macOS/Linux
-    python3 -m venv venv
-    source venv/bin/activate
+## Hugging Face Model
 
-    # For Windows
-    conda -m venv venv
-    .\venv\Scripts\activate
-    ```
-
-3.  **Install the required dependencies:**
-    ```sh
-    conda install streamlit
-    ```
-
-### Running the Application
-
-Once the setup is complete, you can launch the Streamlit application with a single command:
-
-```sh
-C:/Users/Thinkpad/anaconda3/Scripts/activate
-conda activate base
-set PYTHONPATH=%PYTHONPATH%;C:\Applications_Projacts\pyProjacts\project_03
-streamlit run app/ui/streamlit_app.py
-```
-
-This will open the application in your default web browser.
-
-## Project Structure
-
-The project is organized into several modules to separate concerns:
-
-```
-│   .gitignore
-│   .sh1
-│   COMMIT_LOG.md
-│   project-contents.txt
-│   pyproject.toml
-│   README.md
-│   requirements.txt
-│
-├───.github
-│   └───workflows
-│           main.yml
-│
-├───.pytest_cache
-│   │   .gitignore
-│   │   CACHEDIR.TAG
-│   │   README.md
-│   │
-│   └───v
-│       └───cache
-│               lastfailed
-│               nodeids
-│
-├───app
-│   │   __init__.py
-│   │
-│   ├───algorithms
-│   │   │   dijkstra.py
-│   │   │   kruskal.py
-│   │   │   linear_search.py
-│   │   │   merge_sort.py
-│   │   │   quick_sort.py
-│   │   │   __init__.py
-│   │   │
-│   │   └───__pycache__
-│   │           dijkstra.cpython-312.pyc
-│   │           kruskal.cpython-312.pyc
-│   │           linear_search.cpython-312.pyc
-│   │           merge_sort.cpython-312.pyc
-│   │           quick_sort.cpython-312.pyc
-│   │           __init__.cpython-312.pyc
-│   │
-│   ├───ui
-│   │   │   components.py
-│   │   │   streamlit_app.py
-│   │   │   __init__.py
-│   │   │
-│   │   └───__pycache__
-│   │           components.cpython-312.pyc
-│   │           __init__.cpython-312.pyc
-│   │
-│   ├───utils
-│   │   │   io.py
-│   │   │   sample_generators.py
-│   │   │   types.py
-│   │   │   union_find.py
-│   │   │   validators.py
-│   │   │   __init__.py
-│   │   │
-│   │   └───__pycache__
-│   │           types.cpython-312.pyc
-│   │           union_find.cpython-312.pyc
-│   │           __init__.cpython-312.pyc
-│   │
-│   ├───visualization
-│   │   │   engine.py
-│   │   │   renderers.py
-│   │   │   __init__.py
-│   │   │
-│   │   └───__pycache__
-│   │           engine.cpython-312.pyc
-│   │           renderers.cpython-312.pyc
-│   │           __init__.cpython-312.pyc
-│   │
-│   └───__pycache__
-│           __init__.cpython-312.pyc
-│
-├───docs
-│       API.md
-│
-├───examples
-│       trace_dijkstra_example.json
-│       trace_merge_sort_example.json
-│
-├───sample_data
-│       sample_array.txt
-│       sample_graph.json
-│
-└───tests
-        conftest.py
-        test_dijkstra.py
-        test_kruskal.py
-        test_linear_search.py
-        test_merge_sort.py
-        test_quick_sort.py
-        test_streamlit_app.py
-```
-
-## How to Contribute
-
-Adding a new algorithm is designed to be straightforward.
-
-1.  **Create the Algorithm File**:
-
-    - Add a new Python file in `app/algorithms/` (e.g., `my_new_sort.py`).
-    - Inside this file, create a **generator function** that takes the required data as input (e.g., an array or graph).
-
-2.  **Implement the Generator**:
-
-    - Your function must `yield` an `Event` object (from `app.utils.types`) for every logical step of the algorithm.
-    - The `data` attribute of each `Event` must contain a complete snapshot of the visual state (e.g., the array and a list of colors for the bars). See existing algorithms for examples.
-
-3.  **Register the Algorithm**:
-
-    - Open `app/ui/streamlit_app.py`.
-    - Import your new generator function.
-    - Add it to the `ALGORITHMS` dictionary, specifying its name, generator function, and type (`"array"` or `"graph"`).
-
-    ```python
-    # In app/ui/streamlit_app.py
-    from app.algorithms.my_new_sort import my_new_sort_generator
-
-    ALGORITHMS = {
-        # ... other algorithms
-        "My New Sort": {"generator": my_new_sort_generator, "type": "array"},
-    }
-    ```
-
-4.  **Create a Renderer (Optional)**:
-    - If your algorithm requires a new type of visualization, you can add a new rendering function to `app/visualization/renderers.py` and call it from `app/ui/streamlit_app.py`.
-
-## Tech Stack
-
-- **Python**: Core programming language.
-- **Streamlit**: For creating the interactive web application UI.
-- **Matplotlib**: For generating the plot-based visualizations.
-- **NetworkX**: For graph data structures and layout algorithms.
-
-## License
-
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+The fine-tuned model is available on Hugging Face at: [https://huggingface.co/Emran025/bert_text_classifier](https://huggingface.co/Emran025/bert_text_classifier)

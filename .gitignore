@@ -1,8 +1,21 @@
+#-*- shell-script -*-
+#
+# git-ls-files --others --exclude-from=.git/info/exclude
+# Lines that start with '#' are comments.
+# For a project mostly in C, the following would be a good set of
+# exclude patterns (uncomment them if you want to use them):
+# *.[oa]
+# *~
+#
 # Python
-__pycache__/
 *.pyc
 *.pyo
 *.pyd
+__pycache__/
+.pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints/
 
 # Environments
 .env
@@ -10,9 +23,9 @@ __pycache__/
 env/
 venv/
 ENV/
-env.bak/
-venv.bak/
 
-# IDEs
-.idea/
-.vscode/
+# Secrets
+*.pem
+*.key
+credentials.json
+token.pickle
